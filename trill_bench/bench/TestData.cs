@@ -5,7 +5,7 @@ using Microsoft.StreamProcessing;
 
 namespace bench
 {
-    using test_t = StreamEvent<double>;
+    using test_t = StreamEvent<float>;
 
     public class TestObs : IObservable<test_t>
     {
@@ -28,7 +28,7 @@ namespace bench
         {
             for (long i = 0; i < duration; i += period)
             {
-                data.Add(StreamEvent.CreateInterval(i, i + period, (double) i));
+                data.Add(StreamEvent.CreateInterval(i, i + period, (float) i));
             }
         }
 

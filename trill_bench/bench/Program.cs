@@ -8,8 +8,8 @@ namespace bench
 {
     class Program
     {
-        static double RunTest<TResult>(Func<IStreamable<Empty, double>> data,
-            Func<IStreamable<Empty, double>, IStreamable<Empty, TResult>> transform)
+        static double RunTest<TPayload, TResult>(Func<IStreamable<Empty, TPayload>> data,
+            Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform)
         {
             var stream = data();
 
@@ -33,7 +33,7 @@ namespace bench
             double time = 0;
             string testcase = "normalize".ToLower();
 
-            Func<IStreamable<Empty, double>> data = () =>
+            Func<IStreamable<Empty, float>> data = () =>
             {
                 return new TestObs("test", duration, period)
                     .ToStreamable();
@@ -48,21 +48,21 @@ namespace bench
                     );
                     break;
 
-                case "fillconst_trill":
+                case "fillconst":
                     time = RunTest(data, stream =>
                         stream
                             .FillConst(period, gap_tol, 0)
                     );
                     break;
 
-                case "fillmean_trill":
+                case "fillmean":
                     time = RunTest(data, stream =>
                         stream
                             .FillMean(window, period, gap_tol)
                     );
                     break;
 
-                case "resample_trill":
+                case "resample":
                     time = RunTest(data, stream =>
                         stream
                             .Resample(period, period / 2)
