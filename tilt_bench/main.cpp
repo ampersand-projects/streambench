@@ -9,36 +9,21 @@
 #include "tilt/codegen/vinstr.h"
 #include "tilt/engine/engine.h"
 
-using namespace tilt;
-using namespace tilt::tilder;
+#include "tilt_bench.h"
+
 using namespace std;
 using namespace std::chrono;
-
-Op _Select(_sym in, function<Expr(Expr)> sel_expr)
-{
-    auto e = in[_pt(0)];
-    auto e_sym = _sym("e", e);
-    auto sel = sel_expr(e_sym);
-    auto sel_sym = _sym("sel", sel);
-    auto sel_op = _op(
-        _iter(0, 1),
-        Params{ in },
-        SymTable{ {e_sym, e}, {sel_sym, sel} },
-        _exists(e_sym),
-        sel_sym);
-    return sel_op;
-}
 
 int main(int argc, char** argv)
 {
     int dlen = (argc > 1) ? atoi(argv[1]) : 20;
     int len = (argc > 2) ? atoi(argv[2]) : 10;
-    uint32_t dur = 5;
+    uint32_t dur = 1;
 
     // input stream
     auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
 
-    auto query_op = _Select(in_sym, [](Expr expr) { return _add(expr, _f32(10)); });
+    auto query_op = _Norm(in_sym, len);
     auto query_op_sym = _sym("query", query_op);
     cout << endl << "TiLT IR:" << endl;
     cout << IRPrinter::Build(query_op) << endl;

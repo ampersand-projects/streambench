@@ -15,6 +15,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 add_subdirectory(tilt/third_party/easy_jit)
 
+include_directories(${LLVM_INCLUDE_DIRS} include tilt/tilt/include)
 add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(llvm_libs native orcjit mcjit objcarcopts)
 set(easyjit_lib "${CMAKE_BINARY_DIR}/tilt/third_party/easy_jit/bin/EasyJitPass.so")
