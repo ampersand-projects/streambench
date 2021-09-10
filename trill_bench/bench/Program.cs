@@ -19,6 +19,7 @@ namespace bench
 
             s_obs
                 .ToStreamEventObservable()
+                //.ForEach(e => Console.WriteLine(e.ToString()));
                 .Wait();
             sw.Stop();
             return sw.Elapsed.TotalSeconds;
@@ -26,12 +27,14 @@ namespace bench
 
         static void Main(string[] args)
         {
-            long duration = 100000;
-            long period = 8;
+            long duration = 10000;
+            long period = 1;
             long gap_tol = 100;
-            long window = 1000;
+            long window = 50;
+            long longwin = 50;
+            long shortwin = 20;
             double time = 0;
-            string testcase = "normalize".ToLower();
+            string testcase = "rsicalculation".ToLower();
 
             Func<IStreamable<Empty, float>> data = () =>
             {
@@ -67,6 +70,24 @@ namespace bench
                         stream
                             .Resample(period, period / 2)
                     );
+                    break;
+                
+                case "movingaveragecrossover":
+                    time = RunTest(data, stream =>
+                        stream
+                            .MovingAverageCrossover(longwin, shortwin));
+                    break;
+                
+                case "largeqtytransaction":
+                    time = RunTest(data, stream =>
+                        stream
+                            .LargeQtyTransaction(window));
+                    break;
+                
+                case "rsicalculation":
+                    time = RunTest(data, stream =>
+                        stream
+                            .RSI_calculation(RSIperiod:14));
                     break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
