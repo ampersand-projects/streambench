@@ -16,14 +16,14 @@ using namespace std::chrono;
 
 int main(int argc, char** argv)
 {
-    int dlen = (argc > 1) ? atoi(argv[1]) : 20;
+    int dlen = (argc > 1) ? atoi(argv[1]) : 100;
     int len = (argc > 2) ? atoi(argv[2]) : 10;
     uint32_t dur = 1;
 
     // input stream
     auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
 
-    auto query_op = _Norm(in_sym, len);
+    auto query_op = _MACrossOver(in_sym, 1, 20, 50, 10);
     auto query_op_sym = _sym("query", query_op);
     cout << endl << "TiLT IR:" << endl;
     cout << IRPrinter::Build(query_op) << endl;
@@ -40,13 +40,31 @@ int main(int argc, char** argv)
 
     jit->AddModule(move(llmod));
 
-    auto loop_addr = (region_t* (*)(ts_t, ts_t, region_t*, region_t*)) jit->Lookup(loop->get_name());
+    auto loop_addr = (region_t* (*)(ts_t, ts_t, region_t*, region_t*, region_t*)) jit->Lookup(loop->get_name());
+
+    struct Data {
+        float short_sum;
+        float short_count;
+        float long_sum;
+        float long_count;
+
+        string str() const
+        {
+            return "{"
+                + to_string(short_sum) + ","
+                + to_string(short_count) + ","
+                + to_string(long_sum) + ","
+                + to_string(long_count) + "}";
+        }
+    };
 
     auto size = get_buf_size(dlen);
     auto in_tl = new ival_t[size];
     auto in_data = new float[size];
+    auto state_tl = new ival_t[size];
+    auto state_data = new Data[size];
     auto out_tl = new ival_t[size];
-    auto out_data = new float[size];
+    auto out_data = new bool[size];
 
     region_t in_reg;
     init_region(&in_reg, 0, size, in_tl, reinterpret_cast<char*>(in_data));
@@ -57,15 +75,17 @@ int main(int argc, char** argv)
         in_tl[in_reg.ei] = {t, dur};
         in_data[in_reg.ei] = i%1000 + 1;
         out_tl[i] = {0, 0};
-        out_data[i] = 0;
+        out_data[i] = false;
     }
 
+    region_t state_reg;
+    init_region(&state_reg, 0, size, state_tl, reinterpret_cast<char*>(state_data));
     region_t out_reg;
     init_region(&out_reg, 0, size, out_tl, reinterpret_cast<char*>(out_data));
 
     cout << "Query execution: " << endl;
     auto start_time = high_resolution_clock::now();
-    auto* res_reg = loop_addr(0, dur*dlen, &out_reg, &in_reg);
+    auto* res_reg = loop_addr(0, dur*dlen, &out_reg, &in_reg, &state_reg);
     auto end_time = high_resolution_clock::now();
 
     int out_count = dlen;
