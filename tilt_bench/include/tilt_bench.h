@@ -10,11 +10,10 @@
 #include "tilt/codegen/vinstr.h"
 #include "tilt/engine/engine.h"
 
-#include "tilt_norm.h"
-#include "tilt_ma.h"
-
 using namespace std;
 using namespace std::chrono;
+using namespace tilt;
+using namespace tilt::tilder;
 
 template<typename T>
 class Dataset {
@@ -92,107 +91,6 @@ public:
 protected:
     virtual Op query() = 0;
     virtual void execute(intptr_t) = 0;
-};
-
-class NormBench : public Benchmark {
-public:
-    NormBench(int64_t window, dur_t period, int64_t size) :
-        window(window), period(period), size(size)
-    {}
-
-private:
-    Op query() final
-    {
-        auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Norm(in_sym, window);
-    }
-
-    void init() final
-    {
-        in_reg = create_reg<float>(size);
-        out_reg = create_reg<float>(size);
-
-        SynthData<float> dataset(period, size);
-        dataset.fill(&in_reg);
-    }
-
-    void execute(intptr_t addr) final
-    {
-        auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*)) addr;
-        query(0, period * size, &out_reg, &in_reg);
-    }
-
-    void release() final
-    {
-        release_reg(&in_reg);
-        release_reg(&out_reg);
-    }
-
-    int64_t window;
-    dur_t period;
-    int64_t size;
-    region_t in_reg;
-    region_t out_reg;
-};
-
-struct MOCAData {
-    float a;
-    float b;
-    float c;
-    float d;
-};
-
-class MOCABench : public Benchmark {
-public:
-    MOCABench(int64_t period, int64_t w_short, int64_t w_long, int64_t scale, int64_t size) :
-        period(period), w_short(w_short), w_long(w_long), scale(scale), size(size)
-    {}
-
-private:
-    Op query() final
-    {
-        auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _MACrossOver(in_sym, period, w_short, w_long, scale);
-    }
-
-    void init() final
-    {
-        in_reg = create_reg<float>(size);
-        state_reg = create_reg<MOCAData>(size);
-        out_reg = create_reg<bool>(size);
-
-        SynthData<float> dataset(period, size);
-        dataset.fill(&in_reg);
-    }
-
-    void execute(intptr_t addr) final
-    {
-        auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*, region_t*)) addr;
-        query(0, period * size, &out_reg, &in_reg, &state_reg);
-    }
-
-    void release() final
-    {
-        for (int i = 0; i < size; i++) {
-            cout << "(" << in_reg.tl[i].t << "," << in_reg.tl[i].t + in_reg.tl[i].d << ") "
-                << reinterpret_cast<float*>(in_reg.data)[i] << " -> "
-                << "(" << out_reg.tl[i].t << "," << out_reg.tl[i].t + out_reg.tl[i].d << ")"
-                << reinterpret_cast<bool*>(out_reg.data)[i] << endl;
-        }
-
-        release_reg(&in_reg);
-        release_reg(&state_reg);
-        release_reg(&out_reg);
-    }
-
-    dur_t period;
-    int64_t w_short;
-    int64_t w_long;
-    int64_t scale;
-    int64_t size;
-    region_t in_reg;
-    region_t state_reg;
-    region_t out_reg;
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_BENCH_H_

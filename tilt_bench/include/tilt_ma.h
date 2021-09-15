@@ -3,6 +3,7 @@
 
 #include "tilt/builder/tilder.h"
 #include "tilt_base.h"
+#include "tilt_bench.h"
 
 using namespace tilt;
 using namespace tilt::tilder;
@@ -101,5 +102,58 @@ Op _MACrossOver(_sym in, int64_t p, int64_t w_short, int64_t w_long, int64_t sca
 
     return maco_op;
 }
+
+struct MOCAState {
+    float short_sum;
+    float short_count;
+    float long_sum;
+    float long_count;
+};
+
+class MOCABench : public Benchmark {
+public:
+    MOCABench(int64_t period, int64_t w_short, int64_t w_long, int64_t scale, int64_t size) :
+        period(period), w_short(w_short), w_long(w_long), scale(scale), size(size)
+    {}
+
+private:
+    Op query() final
+    {
+        auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
+        return _MACrossOver(in_sym, period, w_short, w_long, scale);
+    }
+
+    void init() final
+    {
+        in_reg = create_reg<float>(size);
+        state_reg = create_reg<MOCAState>(size);
+        out_reg = create_reg<bool>(size);
+
+        SynthData<float> dataset(period, size);
+        dataset.fill(&in_reg);
+    }
+
+    void execute(intptr_t addr) final
+    {
+        auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*, region_t*)) addr;
+        query(0, period * size, &out_reg, &in_reg, &state_reg);
+    }
+
+    void release() final
+    {
+        release_reg(&in_reg);
+        release_reg(&state_reg);
+        release_reg(&out_reg);
+    }
+
+    dur_t period;
+    int64_t w_short;
+    int64_t w_long;
+    int64_t scale;
+    int64_t size;
+    region_t in_reg;
+    region_t state_reg;
+    region_t out_reg;
+};
 
 #endif  // TILT_BENCH_INCLUDE_TILT_MA_H_

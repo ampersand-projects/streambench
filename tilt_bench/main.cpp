@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "tilt_bench.h"
+#include "tilt_norm.h"
+#include "tilt_ma.h"
 
 using namespace std;
 

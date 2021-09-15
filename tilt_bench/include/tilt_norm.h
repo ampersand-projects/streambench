@@ -3,6 +3,7 @@
 
 #include "tilt/builder/tilder.h"
 #include "tilt_base.h"
+#include "tilt_bench.h"
 
 using namespace tilt;
 using namespace tilt::tilder;
@@ -54,5 +55,46 @@ Op _Norm(_sym in, int64_t window)
 
     return query_op;
 }
+
+class NormBench : public Benchmark {
+public:
+    NormBench(int64_t window, dur_t period, int64_t size) :
+        window(window), period(period), size(size)
+    {}
+
+private:
+    Op query() final
+    {
+        auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
+        return _Norm(in_sym, window);
+    }
+
+    void init() final
+    {
+        in_reg = create_reg<float>(size);
+        out_reg = create_reg<float>(size);
+
+        SynthData<float> dataset(period, size);
+        dataset.fill(&in_reg);
+    }
+
+    void execute(intptr_t addr) final
+    {
+        auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*)) addr;
+        query(0, period * size, &out_reg, &in_reg);
+    }
+
+    void release() final
+    {
+        release_reg(&in_reg);
+        release_reg(&out_reg);
+    }
+
+    int64_t window;
+    dur_t period;
+    int64_t size;
+    region_t in_reg;
+    region_t out_reg;
+};
 
 #endif  // TILT_BENCH_INCLUDE_TILT_NORM_H_
