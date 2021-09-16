@@ -26,12 +26,14 @@ namespace bench
 
         static void Main(string[] args)
         {
-            long duration = 100000;
-            long period = 8;
+            long duration = 10000;
+            long period = 1;
             long gap_tol = 100;
-            long window = 1000;
+            long window = 50;
+            long longwin = 50;
+            long shortwin = 20;
             double time = 0;
-            string testcase = "normalize".ToLower();
+            string testcase = "rsi".ToLower();
 
             Func<IStreamable<Empty, float>> data = () =>
             {
@@ -67,6 +69,27 @@ namespace bench
                         stream
                             .Resample(period, period / 2)
                     );
+                    break;
+                
+                case "algotrading":
+                    time = RunTest(data, stream =>
+                        stream
+                            .AlgoTrading(longwin, shortwin, period)
+                    );    
+                    break;
+                
+                case "largeqty":
+                    time = RunTest(data, stream =>
+                        stream
+                            .LargeQty(window, period)
+                    );    
+                    break;
+                
+                case "rsi":
+                    time = RunTest(data, stream =>
+                        stream
+                            .RSI(RSIperiod: 14, period)
+                    );       
                     break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
