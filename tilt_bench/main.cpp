@@ -2,6 +2,7 @@
 
 #include "tilt_norm.h"
 #include "tilt_ma.h"
+#include "tilt_rsi.h"
 
 using namespace std;
 
@@ -119,7 +120,7 @@ private:
 
 int main(int argc, char** argv)
 {
-    MOCABench bench(1, 20, 50, 10, 100);
+    RSIBench bench(1, 10, 10, 100);
     auto time = bench.run();
     cout << "Time: " << time << endl;
 
