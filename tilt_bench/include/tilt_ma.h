@@ -126,7 +126,7 @@ private:
     void init() final
     {
         in_reg = create_reg<float>(size);
-        state_reg = create_reg<MOCAState>(size);
+        state_reg = create_reg<MOCAState>(scale);
         out_reg = create_reg<bool>(size);
 
         SynthData<float> dataset(period, size);

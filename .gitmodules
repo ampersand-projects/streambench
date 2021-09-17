@@ -1,9 +1,10 @@
 [submodule "tilt"]
-	path = tilt_bench/tilt
-	url = https://github.com/ampersand-projects/tilt.git
+    path = tilt_bench/tilt
+    url = https://github.com/ampersand-projects/tilt.git
+    branch = fix
 [submodule "trill_bench/Trill"]
-	path = trill_bench/Trill
-	url = https://github.com/microsoft/Trill.git
+    path = trill_bench/Trill
+    url = https://github.com/microsoft/Trill.git
 [submodule "trill_bench/reactive"]
-	path = trill_bench/reactive
-	url = https://github.com/anandj91/reactive.git
+    path = trill_bench/reactive
+    url = https://github.com/anandj91/reactive.git

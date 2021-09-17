@@ -30,11 +30,10 @@ public:
     {
         auto data = reinterpret_cast<T*>(reg->data);
         for (int i = 0; i < len; i++) {
-            auto t = period * i;
-            reg->et = t;
-            reg->ei++;
-            reg->tl[reg->ei] = {t, period};
-            data[reg->ei] = (T) (i % 1000 + 1);
+            auto t = period * (i + 1);
+            commit_data(reg, t);
+            auto* ptr = reinterpret_cast<T*>(fetch(reg, t, get_end_idx(reg), sizeof(T)));
+            *ptr = (T) (i % 1000 + 1);
         }
     }
 
