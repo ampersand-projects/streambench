@@ -58,8 +58,8 @@ Op _Norm(_sym in, int64_t window)
 
 class NormBench : public Benchmark {
 public:
-    NormBench(int64_t window, dur_t period, int64_t size) :
-        window(window), period(period), size(size)
+    NormBench(dur_t period, int64_t window, int64_t size) :
+        period(period), window(window), size(size)
     {}
 
 private:

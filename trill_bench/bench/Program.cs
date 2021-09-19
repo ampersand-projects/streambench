@@ -60,7 +60,7 @@ namespace bench
                 case "fillmean":
                     time = RunTest(data, stream =>
                         stream
-                            .FillMean(window, period, gap_tol)
+                            .FillMean(window, period)
                     );
                     break;
 

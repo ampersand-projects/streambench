@@ -179,22 +179,25 @@ namespace Microsoft.StreamProcessing
             this IStreamable<TKey, float> source,
             long window,
             long period,
-            long gap_tol,
             long offset = 0)
         {
             return source
-                    .Multicast(s => s
-                        .Select((ts, val) => new {ts, val})
-                        .Join(s
-                                .TumblingWindowLifetime(window)
-                                .Average(e => e),
-                            (e, avg) => new {e.ts, e.val, avg}
-                        )
+                .AttachAggregate(
+                    s => s,
+                    w => w.Average(e => e),
+                    (val, avg) => new {val, avg},
+                    window, window, window - 1
+                )
+                .AlterEventDuration(StreamEvent.InfinitySyncTime)
+                .Multicast(s => s.ClipEventDuration(s))
+                .Select((ts, e) => new { ts, e.val, e.avg })
+                .Multicast(s => s
+                    .LeftOuterJoin(s.ShiftEventLifetime(period),
+                        e => true, e => true,
+                        l => l.val,
+                        (l, r) => (l.ts != r.ts) ? l.val : l.avg
                     )
-                    .AlterEventDuration(period)
-                    .Chop(offset, period, gap_tol)
-                    .Select((ts, e) => (ts == e.ts) ? e.val : e.avg)
-                    .AlterEventDuration(period);
+                );
         }
 
         /// <summary>

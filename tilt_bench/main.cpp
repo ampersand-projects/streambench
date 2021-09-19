@@ -4,6 +4,7 @@
 #include "tilt_ma.h"
 #include "tilt_rsi.h"
 #include "tilt_qty.h"
+#include "tilt_impute.h"
 
 using namespace std;
 
@@ -121,7 +122,7 @@ private:
 
 int main(int argc, char** argv)
 {
-    LargeQtyBench bench(1, 5, 10, 100);
+    ImputeBench bench(1, 10, 100);
     auto time = bench.run();
     cout << "Time: " << time << endl;
 
