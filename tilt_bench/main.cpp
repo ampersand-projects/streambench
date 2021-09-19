@@ -3,6 +3,7 @@
 #include "tilt_norm.h"
 #include "tilt_ma.h"
 #include "tilt_rsi.h"
+#include "tilt_qty.h"
 
 using namespace std;
 
@@ -120,7 +121,7 @@ private:
 
 int main(int argc, char** argv)
 {
-    RSIBench bench(1, 10, 10, 100);
+    LargeQtyBench bench(1, 5, 10, 100);
     auto time = bench.run();
     cout << "Time: " << time << endl;
 
