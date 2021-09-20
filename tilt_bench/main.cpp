@@ -6,6 +6,7 @@
 #include "tilt_qty.h"
 #include "tilt_impute.h"
 #include "tilt_peak.h"
+#include "tilt_resample.h"
 
 using namespace std;
 
@@ -123,7 +124,7 @@ private:
 
 int main(int argc, char** argv)
 {
-    PeakBench bench(1, 3, 10, 100);
+    ResampleBench bench(5, 4, 1, 100);
     auto time = bench.run();
     cout << "Time: " << time << endl;
 
