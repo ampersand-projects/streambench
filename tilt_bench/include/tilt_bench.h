@@ -28,12 +28,14 @@ public:
 
     void fill(region_t* reg) final
     {
+        double range = 100;
+
         auto data = reinterpret_cast<T*>(reg->data);
         for (int i = 0; i < len; i++) {
             auto t = period * (i + 1);
             commit_data(reg, t);
             auto* ptr = reinterpret_cast<T*>(fetch(reg, t, get_end_idx(reg), sizeof(T)));
-            *ptr = (T) (i % 1000 + 1);
+            *ptr = static_cast<T>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
         }
     }
 

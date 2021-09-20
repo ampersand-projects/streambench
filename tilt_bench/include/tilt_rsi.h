@@ -154,13 +154,6 @@ private:
 
     void release() final
     {
-        auto size = 100;
-        for (int i = 0; i < size; i++) {
-            cout << "(" << in_reg.tl[i].t << "," << in_reg.tl[i].t + in_reg.tl[i].d << ") "
-                << reinterpret_cast<float*>(in_reg.data)[i] << " -> "
-                << "(" << out_reg.tl[i].t << "," << out_reg.tl[i].t + out_reg.tl[i].d << ")"
-                << reinterpret_cast<float*>(out_reg.data)[i] << endl;
-        }
         release_reg(&in_reg);
         release_reg(&state_reg);
         release_reg(&out_reg);

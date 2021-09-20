@@ -115,7 +115,7 @@ Op _LargeQty(_sym in, int64_t p, int64_t window, int64_t scale)
         auto avg = (sum / count);
         auto var = (square / count) - (avg * avg);
         auto stddev = _sqrt(var);
-        return _new(vector<Expr>{value, avg, stddev, count});
+        return _cast(types::INT8, _gt(value, avg + (_f32(3) * stddev)));
     });
     auto sel_sym = _sym("sel", sel);
 
@@ -186,7 +186,7 @@ private:
     {
         in_reg = create_reg<float>(size);
         state_reg = create_reg<ZScore>(scale);
-        out_reg = create_reg<StdDev>(size);
+        out_reg = create_reg<bool>(size);
 
         SynthData<float> dataset(period, size);
         dataset.fill(&in_reg);
@@ -201,6 +201,7 @@ private:
     void release() final
     {
         release_reg(&in_reg);
+        release_reg(&state_reg);
         release_reg(&out_reg);
     }
 
