@@ -236,7 +236,7 @@ namespace Microsoft.StreamProcessing
         /// <param name="window">Size of the window</param>
         /// <param name="period">Period of each event</param>
         /// <returns>Stream of floats giving the quantities of those transactions flagged as potentially frauds.</returns>
-        public static IStreamable<TKey, float> LargeQty<TKey>(
+        public static IStreamable<TKey, bool> LargeQty<TKey>(
             this IStreamable<TKey, float> source,
             long window,
             long period)
@@ -251,7 +251,7 @@ namespace Microsoft.StreamProcessing
 
             var largeQty = qtyStat
                 .Join(forked[1], (prevWin, currQty) => new {prevWin.avgQty, prevWin.stdevQty, currQty})
-                .Select(e => (e.currQty > e.avgQty + 3 * e.stdevQty) ? e.currQty : 0);
+                .Select(e => (e.currQty > e.avgQty + 3 * e.stdevQty));
 
             return largeQty;
         }
@@ -272,7 +272,7 @@ namespace Microsoft.StreamProcessing
                 .Multicast(s => s
                     .ShiftEventLifetime(period)
                     .Join(s, (left, right) => right - left));
-            
+
             var relativeStrengthIndex = dailyDifference
                 .HoppingWindowLifetime(RSIperiod,period)
                 .Aggregate(w=>w.Average(e=>e > 0 ? e : 0),

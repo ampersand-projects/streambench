@@ -9,26 +9,26 @@ namespace bench
 
     public class TestObs : IObservable<test_t>
     {
-        public long duration;
+        public long size;
         public long period;
-        public string signal;
-
         public List<test_t> data;
 
-        public TestObs(string signal, long duration, long period)
+        public TestObs(long period, long size)
         {
-            this.signal = signal;
             this.period = period;
-            this.duration = duration;
+            this.size = size;
             this.data = new List<test_t>();
             Sample();
         }
 
         private void Sample()
         {
-            for (long i = 0; i < duration; i += period)
+            var rand = new Random();
+            double range = 100.0;
+            for (long i = 0; i < size; i++)
             {
-                data.Add(StreamEvent.CreateInterval(i, i + period, (float) i));
+                var payload = rand.NextDouble() * range - (range / 2);
+                data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, (float) payload));
             }
         }
 

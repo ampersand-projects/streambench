@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "tilt_norm.h"
 #include "tilt_ma.h"
@@ -124,9 +125,38 @@ private:
 
 int main(int argc, char** argv)
 {
-    ResampleBench bench(5, 4, 1, 100);
-    auto time = bench.run();
-    cout << "Time: " << time << endl;
+    string testcase = (argc > 1) ? argv[1] : "normalize";
+    int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
+
+    double time = 0;
+
+    if (testcase == "normalize") {
+        NormBench bench(1, 10000, size);
+        time = bench.run();
+    } else if (testcase == "fillmean") {
+        ImputeBench bench(1, 10000, size);
+        time = bench.run();
+    } else if (testcase == "resample") {
+        ResampleBench bench(4, 5, 1000, size);
+        time = bench.run();
+    } else if (testcase == "algotrading") {
+        MOCABench bench(1, 20, 50, 100, size);
+        time = bench.run();
+    } else if (testcase == "rsi") {
+        RSIBench bench(1, 14, 100, size);
+        time = bench.run();
+    } else if (testcase == "largeqty") {
+        LargeQtyBench bench(1, 10, 100, size);
+        time = bench.run();
+    } else if (testcase == "pantom") {
+        PeakBench bench(1, 30, 100, size);
+        time = bench.run();
+    } else {
+        throw runtime_error("Invalid testcase");
+    }
+
+    cout << "Testcase: " << testcase <<", Size: " << size
+        << ", Time: " << setprecision(3) << time / 1000000 << endl;
 
     return 0;
 }

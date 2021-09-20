@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive.Linq;
 using Microsoft.StreamProcessing;
@@ -26,19 +25,16 @@ namespace bench
 
         static void Main(string[] args)
         {
-            long duration = 10000;
+            string testcase = (args.Length > 0) ? args[0] : "normalize";
+            long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
             long period = 1;
-            long gap_tol = 100;
-            long window = 50;
-            long longwin = 50;
-            long shortwin = 20;
             double time = 0;
-            string testcase = "rsi".ToLower();
 
             Func<IStreamable<Empty, float>> data = () =>
             {
-                return new TestObs("test", duration, period)
-                    .ToStreamable();
+                return new TestObs(period, size)
+                    .ToStreamable()
+                    .Cache();
             };
 
             switch (testcase)
@@ -46,49 +42,45 @@ namespace bench
                 case "normalize":
                     time = RunTest(data, stream =>
                         stream
-                            .Normalize(window)
+                            .Normalize(10000)
                     );
                     break;
-
-                case "fillconst":
-                    time = RunTest(data, stream =>
-                        stream
-                            .FillConst(period, gap_tol, 0)
-                    );
-                    break;
-
                 case "fillmean":
                     time = RunTest(data, stream =>
                         stream
-                            .FillMean(window, period)
+                            .FillMean(10000, period)
                     );
                     break;
-
                 case "resample":
-                    time = RunTest(data, stream =>
+                    long iperiod = 4;
+                    long operiod = 5;
+                    Func<IStreamable<Empty, float>> sig4 = () =>
+                    {
+                        return new TestObs(iperiod, size)
+                            .ToStreamable()
+                            .Cache();
+                    };
+                    time = RunTest(sig4, stream =>
                         stream
-                            .Resample(period, period / 2)
+                            .Resample(iperiod, operiod)
                     );
                     break;
-                
                 case "algotrading":
                     time = RunTest(data, stream =>
                         stream
-                            .AlgoTrading(longwin, shortwin, period)
+                            .AlgoTrading(50, 20, period)
                     );    
                     break;
-                
                 case "largeqty":
                     time = RunTest(data, stream =>
                         stream
-                            .LargeQty(window, period)
+                            .LargeQty(10, period)
                     );    
                     break;
-                
                 case "rsi":
                     time = RunTest(data, stream =>
                         stream
-                            .RSI(RSIperiod: 14, period)
+                            .RSI(14, period)
                     );       
                     break;
                 default:
