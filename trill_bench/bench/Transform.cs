@@ -172,7 +172,6 @@ namespace Microsoft.StreamProcessing
         /// <param name="source">Input stream</param>
         /// <param name="window">Mean window</param>
         /// <param name="period">Period of input signal stream</param>
-        /// <param name="gap_tol">Gap tolerance</param>
         /// <param name="offset">Offset</param>
         /// <returns>Signal after missing values filled with `val`</returns>
         public static IStreamable<TKey, float> FillMean<TKey>(
@@ -219,11 +218,14 @@ namespace Microsoft.StreamProcessing
                 .Multicast(t => t
                     .HoppingWindowLifetime(longwin, period)
                     .Average(e => e)
+                    .AlterEventDuration(period)
                     .Join(t
                             .HoppingWindowLifetime(shortwin, period)
-                            .Average(e => e),
-                        (smaLong, smaShort) => new {smaLong, smaShort}))
-                .Select(e => e.smaShort > e.smaLong);
+                            .Average(e => e)
+                            .AlterEventDuration(period),
+                        (smaLong, smaShort) => smaShort > smaLong
+                    )
+                );
         }
 
         /// <summary>
@@ -241,19 +243,16 @@ namespace Microsoft.StreamProcessing
             long window,
             long period)
         {
-            var forked = source.Multicast(2);
-            var qtyStat = forked[0]
-                .HoppingWindowLifetime(window, period)
-                .Aggregate(w => w.Average(e => e), 
-                           w => w.StandardDeviation(e => e), 
-                           (avgQty, stdevQty) => new {avgQty, stdevQty})
-                .ShiftEventLifetime(period);
-
-            var largeQty = qtyStat
-                .Join(forked[1], (prevWin, currQty) => new {prevWin.avgQty, prevWin.stdevQty, currQty})
-                .Select(e => (e.currQty > e.avgQty + 3 * e.stdevQty));
-
-            return largeQty;
+            return source
+                .Multicast(s => s
+                    .Join(s
+                            .HoppingWindowLifetime(window, period)
+                            .Aggregate(w => new ZScoreAgg())
+                            .AlterEventDuration(period)
+                            .ShiftEventLifetime(period),
+                        (val, zscore) => (val > zscore.avg + 3 * zscore.stddev)
+                    )
+                );
         }
 
         /// <summary>
@@ -268,19 +267,18 @@ namespace Microsoft.StreamProcessing
             long RSIperiod,
             long period)
         {
-            var dailyDifference = source
+            return source
                 .Multicast(s => s
                     .ShiftEventLifetime(period)
-                    .Join(s, (left, right) => right - left));
-
-            var relativeStrengthIndex = dailyDifference
-                .HoppingWindowLifetime(RSIperiod,period)
-                .Aggregate(w=>w.Average(e=>e > 0 ? e : 0),
-                           w=>w.Average(e=>(e < 0 ? -e : 0)), 
-                           (increase,decrease) => increase/decrease)
-                .Select(e => 100 - 100 / (1 + e));
-
-            return relativeStrengthIndex;
+                    .Join(s, (left, right) => right - left)
+                )
+                .HoppingWindowLifetime(RSIperiod, period)
+                .Aggregate(
+                    w => w.Average(e => (e > 0) ? e : 0),
+                    w => w.Average(e => (e < 0) ? -e : 0),
+                    (increase, decrease) => 100 - 100 / (1 + increase / decrease)
+                )
+                .AlterEventDuration(period);
         }
     }
 }
