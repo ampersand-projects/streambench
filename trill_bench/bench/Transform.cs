@@ -181,20 +181,12 @@ namespace Microsoft.StreamProcessing
             long offset = 0)
         {
             return source
-                .AttachAggregate(
-                    s => s,
-                    w => w.Average(e => e),
-                    (val, avg) => new {val, avg},
-                    window, window, window - 1
-                )
-                .AlterEventDuration(StreamEvent.InfinitySyncTime)
-                .Multicast(s => s.ClipEventDuration(s))
-                .Select((ts, e) => new { ts, e.val, e.avg })
                 .Multicast(s => s
-                    .LeftOuterJoin(s.ShiftEventLifetime(period),
+                    .TumblingWindowLifetime(window)
+                    .Average(e => e)
+                    .LeftOuterJoin(s.ShiftEventLifetime(window),
                         e => true, e => true,
-                        l => l.val,
-                        (l, r) => (l.ts != r.ts) ? l.val : l.avg
+                        l => l, (l, r) => r
                     )
                 );
         }

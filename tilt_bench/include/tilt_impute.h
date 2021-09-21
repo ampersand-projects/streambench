@@ -8,27 +8,17 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-Op _FillMean(_sym in)
+Op _FillMean(_sym in, _sym avg_sym)
 {
-    // avg state
-    auto avg_state = _Average(in, [](Expr e) { return e; });
-    auto avg_state_sym = _sym("avg_state", avg_state);
-
-    // avg value
-    auto avg = _div(_get(avg_state_sym, 0), _get(avg_state_sym, 1));
-    auto avg_sym = _sym("avg", avg);
-
     auto e = in[_pt(0)];
     auto e_sym = _sym("e", e);
     auto res = _ifelse(_exists(e_sym), e_sym, avg_sym);
     auto res_sym = _sym("res", res);
     auto sel_op = _op(
         _iter(0, 1),
-        Params{in},
+        Params{in, avg_sym},
         SymTable{
             {e_sym, e},
-            {avg_state_sym, avg_state},
-            {avg_sym, avg},
             {res_sym, res}
         },
         _true(),
@@ -41,7 +31,13 @@ Op _Impute(_sym in, int64_t window)
     auto win = in[_win(-window, 0)];
     auto win_sym = _sym("win", win);
 
-    auto fm = _FillMean(win_sym);
+    auto avg_state = _Average(win_sym, [](Expr e) { return e; });
+    auto avg_state_sym = _sym("avg_state", avg_state);
+
+    auto avg = _div(_get(avg_state_sym, 0), _get(avg_state_sym, 1));
+    auto avg_sym = _sym("avg", avg);
+
+    auto fm = _FillMean(win_sym, avg_sym);
     auto fm_sym = _sym("fm", fm);
 
     return _op(
@@ -49,6 +45,8 @@ Op _Impute(_sym in, int64_t window)
         Params{in},
         SymTable{
             {win_sym, win},
+            {avg_state_sym, avg_state},
+            {avg_sym, avg},
             {fm_sym, fm}
         },
         _exists(win_sym),
