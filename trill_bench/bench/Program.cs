@@ -22,6 +22,24 @@ namespace bench
             sw.Stop();
             return sw.Elapsed.TotalSeconds;
         }
+        
+        static double RunTest<TPayload, TResult>(Func<IStreamable<Empty, TPayload>> data1, 
+            Func<IStreamable<Empty, TPayload>> data2,
+            Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform)
+        {
+            var stream = data1();
+            var stream2 = data2();
+
+            var sw = new Stopwatch();
+            sw.Start();
+            var s_obs = transform(stream,stream2);
+
+            s_obs
+                .ToStreamEventObservable()
+                .Wait();
+            sw.Stop();
+            return sw.Elapsed.TotalSeconds;
+        }
 
         static void Main(string[] args)
         {
@@ -37,16 +55,62 @@ namespace bench
                     .Cache();
             };
 
+            Func<IStreamable<Empty, float>> DataFn(long p, long s)
+            {
+                return () => new TestObs(p, s)
+                    .ToStreamable()
+                    .Cache();
+            }
+            
             switch (testcase)
             {
+                case "select":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .Select(e => e + 3)
+                    );
+                    break;
+                case "where":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .Where(e => e > 0)
+                    );
+                    break;
+                case "aggregate":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .TumblingWindowLifetime(1000 * period)
+                            .Sum(e => e)
+                    );
+                    break;
+                case "alterdur":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .AlterEventDuration(10 * period)
+                    );
+                    break;
+                case "innerjoin":
+                    time = RunTest(DataFn(period, size), DataFn(period, size), (stream,stream2) =>
+                        stream
+                            .Join(stream2, (left, right) => left + right)
+                    );        
+                    break;
+                case "outerjoin":
+                    time = RunTest(DataFn(period, size), DataFn(period, size), (stream, stream2) =>
+                        stream
+                            .FullOuterJoin(stream2, e => true, e => true, 
+                                left => left, right => right, 
+                                (left,right)=> left + right)
+                    );
+                    break;
                 case "normalize":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .Normalize(10000)
                     );
                     break;
                 case "fillmean":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .FillMean(10000, period)
                     );
@@ -66,19 +130,19 @@ namespace bench
                     );
                     break;
                 case "algotrading":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .AlgoTrading(50, 20, period)
                     );    
                     break;
                 case "largeqty":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .LargeQty(10, period)
                     );    
                     break;
                 case "rsi":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .RSI(14, period)
                     );       
