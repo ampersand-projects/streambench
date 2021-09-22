@@ -79,7 +79,7 @@ namespace bench
                 case "aggregate":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .TumblingWindowLifetime(10 * period)
+                            .TumblingWindowLifetime(1000 * period)
                             .Sum(e => e)
                     );
                     break;
@@ -89,13 +89,13 @@ namespace bench
                             .AlterEventDuration(10 * period)
                     );
                     break;
-                case "inner":
+                case "innerjoin":
                     time = RunTest(DataFn(period, size), DataFn(period, size), (stream,stream2) =>
                         stream
                             .Join(stream2, (left, right) => left + right)
                     );        
                     break;
-                case "outer":
+                case "outerjoin":
                     time = RunTest(DataFn(period, size), DataFn(period, size), (stream, stream2) =>
                         stream
                             .FullOuterJoin(stream2, e => true, e => true, 
