@@ -37,8 +37,48 @@ namespace bench
                     .Cache();
             };
 
+            var stream2 = data(); 
             switch (testcase)
             {
+                case "select":
+                    time = RunTest(data, stream =>
+                        stream
+                            .Select(e => e + 3)
+                    );
+                    break;
+                case "where":
+                    time = RunTest(data, stream =>
+                        stream
+                            .Where(e => e > 0)
+                    );
+                    break;
+                case "aggregate":
+                    time = RunTest(data, stream =>
+                        stream
+                            .TumblingWindowLifetime(10 * period)
+                            .Sum(e => e)
+                    );
+                    break;
+                case "alterduration":
+                    time = RunTest(data, stream =>
+                        stream
+                            .AlterEventDuration(10 * period)
+                    );
+                    break;
+                case "innerjoin":
+                    time = RunTest(data, stream =>
+                        stream
+                            .Join(stream2, (left, right) => left + right)
+                    );        
+                    break;
+                case "outerjoin":
+                    time = RunTest(data, stream =>
+                        stream
+                            .FullOuterJoin(stream2, e => e, e => e, 
+                                left => left, right => right, 
+                                (left,right)=> left + right)
+                    );
+                    break;
                 case "normalize":
                     time = RunTest(data, stream =>
                         stream
