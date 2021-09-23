@@ -8,19 +8,23 @@ namespace Microsoft.StreamProcessing
 {
     public struct PassAggState
     {
-        public List<float> InputStream; // Should always have size 12
-        public List<float> OutputStream; // Should always have size 2 
+        public List<float> InputStream;
+        public List<float> OutputStream;
     }
 
     public class LowPassAgg : IAggregate<float, PassAggState, float>
     {
         public Expression<Func<PassAggState>> InitialState()
-            => () => new PassAggState{ InputStream = new List<float>(Enumerable.Repeat(0f, 12)),
-                                       OutputStream = new List<float>(Enumerable.Repeat(0f, 2))};
+            => () => new PassAggState
+            { 
+                InputStream = new List<float>(Enumerable.Repeat(0f, 12)),
+                OutputStream = new List<float>(Enumerable.Repeat(0f, 2))
+            };
 
         public static PassAggState accumulate(PassAggState oldState, long timestamp, float input)
         {
-            oldState.OutputStream.Add(2 * oldState.OutputStream[1] - oldState.OutputStream[0] + input - 2 * oldState.InputStream[6] + oldState.InputStream[0]);
+            var oldput_payload = 2 * oldState.OutputStream[1] - oldState.OutputStream[0] + input - 2 * oldState.InputStream[6] + oldState.InputStream[0];
+            oldState.OutputStream.Add(oldput_payload);
             oldState.OutputStream.RemoveAt(0);
             oldState.InputStream.Add(input);
             oldState.InputStream.RemoveAt(0);
@@ -43,12 +47,16 @@ namespace Microsoft.StreamProcessing
     public class HighPassAgg : IAggregate<float, PassAggState, float>
     {
         public Expression<Func<PassAggState>> InitialState()
-            => () => new PassAggState{ InputStream = new List<float>(new float[32]),
-                                       OutputStream = new List<float>(new float[1])};
+            => () => new PassAggState
+            {
+                InputStream = new List<float>(new float[32]),
+                OutputStream = new List<float>(new float[1])
+            };
 
         public static PassAggState accumulate(PassAggState oldState, long timestamp, float input)
         {
-            oldState.OutputStream.Add(32 * oldState.InputStream[16] - (oldState.OutputStream[0] + input - oldState.InputStream[0]));
+            var oldput_payload = 32 * oldState.InputStream[16] - (oldState.OutputStream[0] + input - oldState.InputStream[0]);
+            oldState.OutputStream.Add(oldput_payload);
             oldState.OutputStream.RemoveAt(0);
             oldState.InputStream.Add(input);
             oldState.InputStream.RemoveAt(0);
