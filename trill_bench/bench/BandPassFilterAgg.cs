@@ -6,73 +6,79 @@ using Microsoft.StreamProcessing.Aggregates;
 
 namespace Microsoft.StreamProcessing
 {
-    public struct PassAggState
+    public abstract class BandPassFilterAggregate<T, R> : IAggregate<T, List<Tuple<T, T>>, R>
     {
-        public List<float> InputStream;
-        public List<float> OutputStream;
-    }
+        public Expression<Func<List<Tuple<T, T>>>> InitialState() => () => new List<Tuple<T, T>>();
 
-    public class LowPassAgg : IAggregate<float, PassAggState, float>
-    {
-        public Expression<Func<PassAggState>> InitialState()
-            => () => new PassAggState
-            { 
-                InputStream = new List<float>(Enumerable.Repeat(0f, 12)),
-                OutputStream = new List<float>(Enumerable.Repeat(0f, 2))
-            };
+        protected abstract void AddInputOutput(List<Tuple<T, T>> set, long timestamp, T input);
 
-        public static PassAggState accumulate(PassAggState oldState, long timestamp, float input)
+        public Expression<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>> Accumulate()
         {
-            var oldput_payload = 2 * oldState.OutputStream[1] - oldState.OutputStream[0] + input - 2 * oldState.InputStream[6] + oldState.InputStream[0];
-            oldState.OutputStream.Add(oldput_payload);
-            oldState.OutputStream.RemoveAt(0);
-            oldState.InputStream.Add(input);
-            oldState.InputStream.RemoveAt(0);
-            return oldState;
-        }       
+            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => AddInputOutput(set, timestamp, input);
+            var block = Expression.Block(temp.Body, temp.Parameters[0]);
+            return Expression.Lambda<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>>(block, temp.Parameters);
+        }
 
-        public Expression<Func<PassAggState, long, float, PassAggState>> Accumulate()
-            => (oldState, timestamp, input) => accumulate(oldState, timestamp, input);
-
-        public Expression<Func<PassAggState, long, float, PassAggState>> Deaccumulate()
-            => (oldState, timestamp, input) => oldState
-
-        public Expression<Func<PassAggState, PassAggState, PassAggState>> Difference()
-            => (left, right) => left;
-
-        public Expression<Func<PassAggState, float>> ComputeResult()
-            => state => state.OutputStream[1];
-    }
-
-    public class HighPassAgg : IAggregate<float, PassAggState, float>
-    {
-        public Expression<Func<PassAggState>> InitialState()
-            => () => new PassAggState
-            {
-                InputStream = new List<float>(new float[32]),
-                OutputStream = new List<float>(new float[1])
-            };
-
-        public static PassAggState accumulate(PassAggState oldState, long timestamp, float input)
+        public Expression<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>> Deaccumulate()
         {
-            var oldput_payload = 32 * oldState.InputStream[16] - (oldState.OutputStream[0] + input - oldState.InputStream[0]);
-            oldState.OutputStream.Add(oldput_payload);
-            oldState.OutputStream.RemoveAt(0);
-            oldState.InputStream.Add(input);
-            oldState.InputStream.RemoveAt(0);
-            return oldState;
-        }  
+            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => set.RemoveAt(0);
+            var block = Expression.Block(temp.Body, temp.Parameters[0]);
+            return Expression.Lambda<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>>(block, temp.Parameters);
+        }
 
-        public Expression<Func<PassAggState, long, float, PassAggState>> Accumulate()
-            => (oldState, timestamp, input) => accumulate(oldState, timestamp, input);
+        private static List<Tuple<T, T>> SetExcept(List<Tuple<T, T>> left, List<Tuple<T, T>> right)
+        {
+            foreach (var t in right) left.RemoveAt(0);
+            return left;
+        }
 
-        public Expression<Func<PassAggState, long, float, PassAggState>> Deaccumulate()
-            => (oldState, timestamp, input) => oldState;
+        public Expression<Func<List<Tuple<T, T>>, List<Tuple<T, T>>, List<Tuple<T, T>>>> Difference()
+            => (leftSet, rightSet) => SetExcept(leftSet, rightSet);
 
-        public Expression<Func<PassAggState, PassAggState, PassAggState>> Difference()
-            => (left, right) => left;
-
-        public Expression<Func<PassAggState, float>> ComputeResult()
-            => state => state.OutputStream[0];
+        public abstract Expression<Func<List<Tuple<T, T>>, R>> ComputeResult();
     }
+
+    public class LowPassFilterAggregate : BandPassFilterAggregate<float, float>
+    {
+        protected override void AddInputOutput(List<Tuple<float, float>> set, long timestamp, float input)
+        {
+            var output = input;
+            if (set.Count > 0)
+                output += 2 * set[set.Count - 1].Item2;
+            if (set.Count > 1)
+                output -= set[set.Count - 2].Item2;
+            if (set.Count > 5)
+                output -= 2 * set[set.Count - 6].Item1;
+            if (set.Count > 11)
+                output += set[set.Count - 12].Item1;
+            set.Add(new Tuple<float, float>(input, output));
+        }
+
+        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
+        {
+            return (state) => state[state.Count - 1].Item2;
+        }
+    }
+
+    public class HighPassFilterAggregate : BandPassFilterAggregate<float, float>
+    {
+        protected override void AddInputOutput(List<Tuple<float, float>> set, long timestamp, float input)
+        {
+            var output = -input;
+            if (set.Count > 15)
+                output += 32 * set[set.Count - 16].Item1;
+            if (set.Count > 0)
+                output -= set[set.Count - 1].Item2;
+            if (set.Count > 31)
+                output += set[set.Count - 32].Item1;
+
+            set.Add(new Tuple<float, float>(input, output));
+        }
+
+        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
+        {
+            return (state) => state[state.Count - 1].Item2;;
+        }
+    }
+
 }
