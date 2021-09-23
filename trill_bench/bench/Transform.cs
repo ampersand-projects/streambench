@@ -288,20 +288,20 @@ namespace Microsoft.StreamProcessing
                 // BandPass Filter
                 .Multicast(s => s
                     .Join(s
-                        // LowPass
+                        // LowPass - Reading from previous 12 inputs
                         .HoppingWindowLifetime(13 * period, period)
                         .Aggregate(w => new LowPassFilterAggregate())
-                        // HighPass
+                        // HighPass - Reading from previous 32 inputs
                         .HoppingWindowLifetime(33 * period, period)
                         .Aggregate(w => new HighPassFilterAggregate())
-                        // Derive
+                        // Derive - Reading from previous 4 inputs
                         .HoppingWindowLifetime(5 * period, period)
                         .Aggregate(w => new DeriveAggregate(window)),
                         (l, r) => r
                     )
                 )
                 .Select(e => e * e)
-                .HoppingWindowLifetime(window, period)
+                .HoppingWindowLifetime(window * period, period)
                 .Average(e => e);
         }
     }
