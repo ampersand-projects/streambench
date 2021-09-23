@@ -293,24 +293,16 @@ namespace Microsoft.StreamProcessing
                         .Aggregate(w => new LowPassFilterAggregate())
                         // HighPass
                         .HoppingWindowLifetime(33 * period, period)
-                        .Aggregate(w => new HighPassFilterAggregate()),
+                        .Aggregate(w => new HighPassFilterAggregate())
+                        // Derive
+                        .HoppingWindowLifetime(5 * period, period)
+                        .Aggregate(w => new DeriveAggregate(window)),
                         (l, r) => r
                     )
-                );
-                // .ShiftEventLifetime(2 * period)
-                // .Multicast(s => s
-                //     .Join(s.ShiftEventLifetime(2 * period), (l, r) => -r)
-                //     .Join(s.ShiftEventLifetime(period), (l, r) => l - 2 * r)
-                //     .Join(s.ShiftEventLifetime(-period), (l, r) => l + 2 * r)
-                //     .Join(s.ShiftEventLifetime(-2 * period), (l, r) => l + r)
-                // )
-                // .ShiftEventLifetime(-2 * period)
-                // .Select(e => e * period / 8)
-                // .Select(e => e * e)
-                // .Multicast(s => s
-                //     .Join(s.HoppingWindowLifetime(window, period), (l, r) => r)
-                // )
-                // .Average(e => e);
+                )
+                .Select(e => e * e)
+                .HoppingWindowLifetime(window, period)
+                .Average(e => e);
         }
     }
 }

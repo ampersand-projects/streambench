@@ -10,11 +10,11 @@ namespace Microsoft.StreamProcessing
     {
         public Expression<Func<List<Tuple<T, T>>>> InitialState() => () => new List<Tuple<T, T>>();
 
-        protected abstract void AddInputOutput(List<Tuple<T, T>> set, long timestamp, T input);
+        protected abstract void UpdateList(List<Tuple<T, T>> set, long timestamp, T input);
 
         public Expression<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>> Accumulate()
         {
-            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => AddInputOutput(set, timestamp, input);
+            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => UpdateList(set, timestamp, input);
             var block = Expression.Block(temp.Body, temp.Parameters[0]);
             return Expression.Lambda<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>>(block, temp.Parameters);
         }
@@ -40,7 +40,7 @@ namespace Microsoft.StreamProcessing
 
     public class LowPassFilterAggregate : BandPassFilterAggregate<float, float>
     {
-        protected override void AddInputOutput(List<Tuple<float, float>> set, long timestamp, float input)
+        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
         {
             var output = input;
             if (set.Count > 0)
@@ -62,7 +62,7 @@ namespace Microsoft.StreamProcessing
 
     public class HighPassFilterAggregate : BandPassFilterAggregate<float, float>
     {
-        protected override void AddInputOutput(List<Tuple<float, float>> set, long timestamp, float input)
+        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
         {
             var output = -input;
             if (set.Count > 15)
@@ -81,4 +81,30 @@ namespace Microsoft.StreamProcessing
         }
     }
 
+    public class DeriveAggregate : BandPassFilterAggregate<float, float>
+    {
+        private long window;
+        public DeriveAggregate (long window) {
+            this.window = window;
+        }
+
+        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
+        {
+            var output = input;
+            if (set.Count > 3)
+                output -= set[set.Count - 4].Item1;
+            if (set.Count > 2)
+                output -= 2 * set[set.Count - 3].Item1;
+            if (set.Count > 1)
+                output += 2 * set[set.Count - 1].Item1;
+            output *= window / 8;
+            
+            set.Add(new Tuple<float, float>(input, output));
+        }
+
+        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
+        {
+            return (state) => state[state.Count - 1].Item2;;
+        }
+    }
 }
