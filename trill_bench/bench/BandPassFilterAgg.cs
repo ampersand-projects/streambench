@@ -35,7 +35,7 @@ namespace Microsoft.StreamProcessing
             => (oldState, timestamp, input) => accumulate(oldState, timestamp, input);
 
         public Expression<Func<PassAggState, long, float, PassAggState>> Deaccumulate()
-            => (oldState, timestamp, input) => accumulate(oldState, timestamp, input);
+            => (oldState, timestamp, input) => oldState
 
         public Expression<Func<PassAggState, PassAggState, PassAggState>> Difference()
             => (left, right) => left;
