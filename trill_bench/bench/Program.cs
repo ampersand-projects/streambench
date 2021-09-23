@@ -43,8 +43,8 @@ namespace bench
 
         static void Main(string[] args)
         {
-            string testcase = (args.Length > 0) ? args[0] : "normalize";
-            long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
+            string testcase = (args.Length > 0) ? args[0] : "pantom";
+            long size = (args.Length > 1) ? long.Parse(args[1]) : 1000000;
             long period = 1;
             double time = 0;
 
@@ -146,6 +146,12 @@ namespace bench
                         stream
                             .RSI(14, period)
                     );       
+                    break;
+                case "pantom":
+                    time = RunTest(data, stream =>
+                        stream
+                            .Pantom(10, period)
+                    );
                     break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);

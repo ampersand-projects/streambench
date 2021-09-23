@@ -272,5 +272,35 @@ namespace Microsoft.StreamProcessing
                 )
                 .AlterEventDuration(period);
         }
+
+        /// <summary> </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="window">Mean window.</param>
+        /// <param name="period">Period of each event</param>
+        /// <returns> </returns>
+        public static IStreamable<TKey, float> Pantom<TKey>(
+            this IStreamable<TKey, float> source,
+            long window,
+            long period
+            )
+        {
+            return source
+                .Aggregate(w => new LowPassAgg())
+                .Aggregate(w => new HighPassAgg())
+                .ShiftEventLifetime(2 * period)
+                .Multicast(s => s
+                    .Join(s.ShiftEventLifetime(2 * period), (l, r) => -r)
+                    .Join(s.ShiftEventLifetime(period), (l, r) => l - 2 * r)
+                    .Join(s.ShiftEventLifetime(-period), (l, r) => l + 2 * r)
+                    .Join(s.ShiftEventLifetime(-2 * period), (l, r) => l + r)
+                )
+                .ShiftEventLifetime(-2 * period)
+                .Select(e => e * period / 8)
+                .Select(e => e * e)
+                .Multicast(s => s
+                    .Join(s.HoppingWindowLifetime(window, period), (l, r) => r)
+                )
+                .Average(e => e);
+        }
     }
 }
