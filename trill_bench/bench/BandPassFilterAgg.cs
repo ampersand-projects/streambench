@@ -6,7 +6,7 @@ using Microsoft.StreamProcessing.Aggregates;
 
 namespace Microsoft.StreamProcessing
 {
-    public abstract class BandPassFilterAggregate<T, R> : IAggregate<T, List<Tuple<T, T>>, R>
+    public abstract class BandPassFilterAggregate<T> : IAggregate<T, List<Tuple<T, T>>, T>
     {
         public Expression<Func<List<Tuple<T, T>>>> InitialState() => () => new List<Tuple<T, T>>();
 
@@ -35,10 +35,11 @@ namespace Microsoft.StreamProcessing
         public Expression<Func<List<Tuple<T, T>>, List<Tuple<T, T>>, List<Tuple<T, T>>>> Difference()
             => (leftSet, rightSet) => SetExcept(leftSet, rightSet);
 
-        public abstract Expression<Func<List<Tuple<T, T>>, R>> ComputeResult();
+        public Expression<Func<List<Tuple<T, T>>, T>> ComputeResult()
+            => (state) => state[state.Count - 1].Item2;
     }
 
-    public class LowPassFilterAggregate : BandPassFilterAggregate<float, float>
+    public class LowPassFilterAggregate : BandPassFilterAggregate<float>
     {
         protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
         {
@@ -53,14 +54,9 @@ namespace Microsoft.StreamProcessing
                 output += set[set.Count - 12].Item1;
             set.Add(new Tuple<float, float>(input, output));
         }
-
-        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
-        {
-            return (state) => state[state.Count - 1].Item2;
-        }
     }
 
-    public class HighPassFilterAggregate : BandPassFilterAggregate<float, float>
+    public class HighPassFilterAggregate : BandPassFilterAggregate<float>
     {
         protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
         {
@@ -74,14 +70,9 @@ namespace Microsoft.StreamProcessing
 
             set.Add(new Tuple<float, float>(input, output));
         }
-
-        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
-        {
-            return (state) => state[state.Count - 1].Item2;;
-        }
     }
 
-    public class DeriveAggregate : BandPassFilterAggregate<float, float>
+    public class DeriveAggregate : BandPassFilterAggregate<float>
     {
         private long window;
         public DeriveAggregate (long window) {
@@ -100,11 +91,6 @@ namespace Microsoft.StreamProcessing
             output *= window / 8;
             
             set.Add(new Tuple<float, float>(input, output));
-        }
-
-        public override Expression<Func<List<Tuple<float, float>>, float>> ComputeResult()
-        {
-            return (state) => state[state.Count - 1].Item2;;
         }
     }
 }
