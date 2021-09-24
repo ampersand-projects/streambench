@@ -86,8 +86,6 @@ Op _HighPass(_sym in, int64_t p)
 
 Op _Derive(_sym in, int64_t p)
 {
-    auto beat = _beat(_iter(0, p));
-
     auto e0 = in[_pt(0)];
     auto e0_sym = _sym("e0", e0);
     auto e1 = in[_pt(-p)];
@@ -97,26 +95,22 @@ Op _Derive(_sym in, int64_t p)
     auto e4 = in[_pt(-4 * p)];
     auto e4_sym = _sym("e4", e4);
 
-    auto t = _cast(types::FLOAT32, beat[_pt(-2 * p)]);
-    auto t_sym = _sym("t", t);
-
     auto e0_val = _ifelse(_exists(e0_sym), e0_sym, _f32(0));
     auto e1_val = _ifelse(_exists(e1_sym), e1_sym, _f32(0));
     auto e3_val = _ifelse(_exists(e3_sym), e3_sym, _f32(0));
     auto e4_val = _ifelse(_exists(e4_sym), e4_sym, _f32(0));
 
-    auto res = (t_sym / _f32(8)) * (e0_val + (_f32(2) * e1_val) - (_f32(2) * e3_val) - e4_val);
+    auto res = _f32(p / 8) * (e0_val + (_f32(2) * e1_val) - (_f32(2) * e3_val) - e4_val);
     auto res_sym = _sym("res", res);
 
     return _op(
         _iter(0, p),
-        Params{in, beat},
+        Params{in},
         SymTable{
             {e0_sym, e0},
             {e1_sym, e1},
             {e3_sym, e3},
             {e4_sym, e4},
-            {t_sym, t},
             {res_sym, res}
         },
         _true(),
