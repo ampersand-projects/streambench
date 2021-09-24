@@ -6,69 +6,67 @@ using Microsoft.StreamProcessing.Aggregates;
 
 namespace Microsoft.StreamProcessing
 {
-    public abstract class BandPassFilterAggregate<T> : IAggregate<T, List<Tuple<T, T>>, T>
+    public struct FilterState<T>
     {
-        public Expression<Func<List<Tuple<T, T>>>> InitialState() => () => new List<Tuple<T, T>>();
+        public T Input;
+        public T Output;
+    }
 
-        protected abstract void UpdateList(List<Tuple<T, T>> set, long timestamp, T input);
+    public abstract class BandPassFilterAggregate<T> : IAggregate<T, List<FilterState<T>>, T>
+    {
+        public Expression<Func<List<FilterState<T>>>> InitialState() => () => new List<FilterState<T>>();
 
-        public Expression<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>> Accumulate()
+        protected abstract void UpdateList(List<FilterState<T>> set, long timestamp, T input);
+
+        public Expression<Func<List<FilterState<T>>, long, T, List<FilterState<T>>>> Accumulate()
         {
-            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => UpdateList(set, timestamp, input);
+            Expression<Action<List<FilterState<T>>, long, T>> temp = (set, timestamp, input) => UpdateList(set, timestamp, input);
             var block = Expression.Block(temp.Body, temp.Parameters[0]);
-            return Expression.Lambda<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>>(block, temp.Parameters);
+            return Expression.Lambda<Func<List<FilterState<T>>, long, T, List<FilterState<T>>>>(block, temp.Parameters);
         }
 
-        public Expression<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>> Deaccumulate()
+        public Expression<Func<List<FilterState<T>>, long, T, List<FilterState<T>>>> Deaccumulate()
         {
-            Expression<Action<List<Tuple<T, T>>, long, T>> temp = (set, timestamp, input) => set.RemoveAt(0);
+            Expression<Action<List<FilterState<T>>, long, T>> temp = (set, timestamp, input) => set.RemoveAt(0);
             var block = Expression.Block(temp.Body, temp.Parameters[0]);
-            return Expression.Lambda<Func<List<Tuple<T, T>>, long, T, List<Tuple<T, T>>>>(block, temp.Parameters);
+            return Expression.Lambda<Func<List<FilterState<T>>, long, T, List<FilterState<T>>>>(block, temp.Parameters);
         }
 
-        private static List<Tuple<T, T>> SetExcept(List<Tuple<T, T>> left, List<Tuple<T, T>> right)
+        private static List<FilterState<T>> SetExcept(List<FilterState<T>> left, List<FilterState<T>> right)
         {
             foreach (var t in right) left.RemoveAt(0);
             return left;
         }
 
-        public Expression<Func<List<Tuple<T, T>>, List<Tuple<T, T>>, List<Tuple<T, T>>>> Difference()
+        public Expression<Func<List<FilterState<T>>, List<FilterState<T>>, List<FilterState<T>>>> Difference()
             => (leftSet, rightSet) => SetExcept(leftSet, rightSet);
 
-        public Expression<Func<List<Tuple<T, T>>, T>> ComputeResult()
-            => (state) => state[state.Count - 1].Item2;
+        public Expression<Func<List<FilterState<T>>, T>> ComputeResult()
+            => (state) => state[state.Count - 1].Output;
     }
 
     public class LowPassFilterAggregate : BandPassFilterAggregate<float>
     {
-        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
+        protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = input;
-            if (set.Count > 0)
-                output += 2 * set[set.Count - 1].Item2;
-            if (set.Count > 1)
-                output -= set[set.Count - 2].Item2;
-            if (set.Count > 5)
-                output -= 2 * set[set.Count - 6].Item1;
-            if (set.Count > 11)
-                output += set[set.Count - 12].Item1;
-            set.Add(new Tuple<float, float>(input, output));
+            var output = 0f;
+            if (set.Count >= 12) {
+                output = 2 * set[set.Count - 1].Output - set[set.Count - 2].Output 
+                         + input - 2 * set[set.Count - 6].Input + set[set.Count - 12].Input;
+            }
+            set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
 
     public class HighPassFilterAggregate : BandPassFilterAggregate<float>
     {
-        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
+        protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = -input;
-            if (set.Count > 15)
-                output += 32 * set[set.Count - 16].Item1;
-            if (set.Count > 0)
-                output -= set[set.Count - 1].Item2;
-            if (set.Count > 31)
-                output += set[set.Count - 32].Item1;
-
-            set.Add(new Tuple<float, float>(input, output));
+            var output = 0f;
+            if (set.Count >= 32) {
+                output = 32 * set[set.Count - 16].Input - (set[set.Count - 1].Output + input - set[set.Count - 32].Input);
+            }
+            set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
 
@@ -79,18 +77,13 @@ namespace Microsoft.StreamProcessing
             this.window = window;
         }
 
-        protected override void UpdateList(List<Tuple<float, float>> set, long timestamp, float input)
+        protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = input;
-            if (set.Count > 3)
-                output -= set[set.Count - 4].Item1;
-            if (set.Count > 2)
-                output -= 2 * set[set.Count - 3].Item1;
-            if (set.Count > 1)
-                output += 2 * set[set.Count - 1].Item1;
-            output *= window / 8;
-            
-            set.Add(new Tuple<float, float>(input, output));
+            var output = 0f;
+            if (set.Count >= 4) {
+                output = (window / 8) * (-set[set.Count - 4].Input - 2 * set[set.Count - 3].Input + 2 * set[set.Count - 1].Input + input);
+            }
+            set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
 }
