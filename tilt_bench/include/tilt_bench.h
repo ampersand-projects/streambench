@@ -60,11 +60,12 @@ public:
         auto& llctx = jit->GetCtx();
         auto llmod = LLVMGen::Build(loop, llctx);
         jit->AddModule(move(llmod));
+        auto addr = jit->Lookup(loop->get_name());
 
         init();
 
         auto start_time = high_resolution_clock::now();
-        execute(jit->Lookup(loop->get_name()));
+        execute(addr);
         auto end_time = high_resolution_clock::now();
 
         release();
