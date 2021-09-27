@@ -280,8 +280,7 @@ namespace Microsoft.StreamProcessing
         /// <returns> </returns>
         public static IStreamable<TKey, float> Pantom<TKey>(
             this IStreamable<TKey, float> source,
-            long period
-            )
+            long period)
         {
             return source
                 .HoppingWindowLifetime(13 * period, period)

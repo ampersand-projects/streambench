@@ -12,8 +12,8 @@ namespace Microsoft.StreamProcessing
         public T Output;
     }
 
-    public abstract class BandPassFilterAggregate<T> : IAggregate<T, List<FilterState<T>>, T>
-    {
+    public abstract class InputOutputListAggregate<T> : IAggregate<T, List<FilterState<T>>, T>
+    {   
         public Expression<Func<List<FilterState<T>>>> InitialState() => () => new List<FilterState<T>>();
 
         protected abstract void UpdateList(List<FilterState<T>> set, long timestamp, T input);
@@ -34,7 +34,7 @@ namespace Microsoft.StreamProcessing
 
         private static List<FilterState<T>> SetExcept(List<FilterState<T>> left, List<FilterState<T>> right)
         {
-            foreach (var t in right) left.RemoveAt(0);
+            left.RemoveRange(0, right.Count);
             return left;
         }
 
@@ -45,44 +45,47 @@ namespace Microsoft.StreamProcessing
             => (state) => state[state.Count - 1].Output;
     }
 
-    public class LowPassFilterAggregate : BandPassFilterAggregate<float>
+    public abstract class InputOutputFloatListAggregate : InputOutputListAggregate<float>
+    {
+        protected FilterState<float> GetElementFromBack(List<FilterState<float>> set, int idx)
+        {
+            if (set.Count >= idx)
+                return set[set.Count - idx];
+            return new FilterState<float> {Input = 0f, Output = 0f};
+        }
+    }
+
+    public class LowPassFilterAggregate : InputOutputFloatListAggregate
     {
         protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = 0f;
-            if (set.Count >= 12) {
-                output = 2 * set[set.Count - 1].Output - set[set.Count - 2].Output 
-                         + input - 2 * set[set.Count - 6].Input + set[set.Count - 12].Input;
-            }
+            var output = 2 * GetElementFromBack(set, 1).Output - GetElementFromBack(set, 2).Output + input
+                         - 2 * GetElementFromBack(set, 6).Input + GetElementFromBack(set, 12).Input;
             set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
 
-    public class HighPassFilterAggregate : BandPassFilterAggregate<float>
+    public class HighPassFilterAggregate : InputOutputFloatListAggregate
     {
         protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = 0f;
-            if (set.Count >= 32) {
-                output = 32 * set[set.Count - 16].Input - (set[set.Count - 1].Output + input - set[set.Count - 32].Input);
-            }
+            var output = 32 * GetElementFromBack(set, 16).Input - (GetElementFromBack(set, 1).Output
+                         + input - GetElementFromBack(set, 32).Input);
             set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
 
-    public class DeriveAggregate : BandPassFilterAggregate<float>
+    public class DeriveAggregate : InputOutputFloatListAggregate
     {
-        private long window;
-        public DeriveAggregate (long window) {
-            this.window = window;
+        private long period;
+        public DeriveAggregate (long period) {
+            this.period = period;
         }
 
         protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
-            var output = 0f;
-            if (set.Count >= 4) {
-                output = (window / 8) * (-set[set.Count - 4].Input - 2 * set[set.Count - 3].Input + 2 * set[set.Count - 1].Input + input);
-            }
+            var output = (period / 8) * (- GetElementFromBack(set, 4).Input - 2 * GetElementFromBack(set, 3).Input 
+                                         + 2 * GetElementFromBack(set, 1).Input + input);
             set.Add(new FilterState<float>{Input = input, Output = output});
         }
     }
