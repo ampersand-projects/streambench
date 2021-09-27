@@ -280,7 +280,7 @@ namespace Microsoft.StreamProcessing
         /// <param name="source">Input stream</param>
         /// <param name="period">Period of each event</param>
         /// <returns> Stream of floats that showcases the peaks of the original stream </returns>
-        public static IStreamable<TKey, float> Pantom<TKey>(
+        public static IStreamable<TKey, float> PanTom<TKey>(
             this IStreamable<TKey, float> source,
             long period)
         {

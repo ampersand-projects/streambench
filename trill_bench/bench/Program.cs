@@ -150,7 +150,7 @@ namespace bench
                 case "pantom":
                     time = RunTest(data, stream =>
                         stream
-                            .Pantom(period)
+                            .PanTom(period)
                     );
                     break;
                 default:

@@ -43,19 +43,16 @@ namespace Microsoft.StreamProcessing
 
         public Expression<Func<List<FilterState<T>>, T>> ComputeResult()
             => (state) => state[state.Count - 1].Output;
-    }
 
-    public abstract class InputOutputFloatListAggregate : InputOutputListAggregate<float>
-    {
         protected FilterState<float> GetElementFromBack(List<FilterState<float>> set, int idx)
         {
             if (set.Count >= idx)
                 return set[set.Count - idx];
-            return new FilterState<float> {Input = 0f, Output = 0f};
+            return new FilterState<float> {Input = default, Output = default};
         }
     }
 
-    public class LowPassFilterAggregate : InputOutputFloatListAggregate
+    public class LowPassFilterAggregate : InputOutputListAggregate<float>
     {
         protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
@@ -65,7 +62,7 @@ namespace Microsoft.StreamProcessing
         }
     }
 
-    public class HighPassFilterAggregate : InputOutputFloatListAggregate
+    public class HighPassFilterAggregate : InputOutputListAggregate<float>
     {
         protected override void UpdateList(List<FilterState<float>> set, long timestamp, float input)
         {
@@ -75,7 +72,7 @@ namespace Microsoft.StreamProcessing
         }
     }
 
-    public class DeriveAggregate : InputOutputFloatListAggregate
+    public class DeriveAggregate : InputOutputListAggregate<float>
     {
         private long period;
         public DeriveAggregate (long period) {
