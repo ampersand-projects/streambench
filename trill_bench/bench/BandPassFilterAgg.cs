@@ -44,11 +44,11 @@ namespace Microsoft.StreamProcessing
         public Expression<Func<List<FilterState<T>>, T>> ComputeResult()
             => (state) => state[state.Count - 1].Output;
 
-        protected FilterState<float> GetElementFromBack(List<FilterState<float>> set, int idx)
+        protected FilterState<T> GetElementFromBack(List<FilterState<T>> set, int idx)
         {
             if (set.Count >= idx)
                 return set[set.Count - idx];
-            return new FilterState<float> {Input = default, Output = default};
+            return new FilterState<T> {Input = default, Output = default};
         }
     }
 
