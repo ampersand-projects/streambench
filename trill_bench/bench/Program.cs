@@ -147,6 +147,12 @@ namespace bench
                             .RSI(14, period)
                     );       
                     break;
+                case "pantom":
+                    time = RunTest(data, stream =>
+                        stream
+                            .PanTom(period)
+                    );
+                    break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
                     return;
