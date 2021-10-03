@@ -272,5 +272,28 @@ namespace Microsoft.StreamProcessing
                 )
                 .AlterEventDuration(period);
         }
+
+        /// <summary> 
+        /// Pan-Tompkins Algorithm. Detects QRS complexes of ECG signals. It is also known as 
+        /// the peak detection algorithm. 
+        /// </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="period">Period of each event</param>
+        /// <returns> Stream of floats that showcases the peaks of the original stream </returns>
+        public static IStreamable<TKey, float> PanTom<TKey>(
+            this IStreamable<TKey, float> source,
+            long period)
+        {
+            return source
+                .HoppingWindowLifetime(13 * period, period)
+                .Aggregate(w => new LowPassFilterAggregate())
+                .HoppingWindowLifetime(33 * period, period)
+                .Aggregate(w => new HighPassFilterAggregate())
+                .HoppingWindowLifetime(5 * period, period)
+                .Aggregate(w => new DeriveAggregate(period))
+                .Select(e => e * e)
+                .HoppingWindowLifetime(30 * period, period)
+                .Average(e => e);
+        }
     }
 }
