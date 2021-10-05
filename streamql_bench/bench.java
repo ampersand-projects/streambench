@@ -19,8 +19,11 @@ public class Bench {
 
     public static ArrayList<Data> streamGen(long size, long period) {
         ArrayList<Data> source = new ArrayList<Data>();
+        Random rand = new Random();
+        double range = 100.0;
         for (int i = 0; i < size; i++) {
-            source.add(new Data(i, i + period, (float) i));
+            double payload = rand.nextDouble() * range - range / 2;
+            source.add(new Data(i * period, (i + 1) * period, (float) payload));
         }
         return source;
     }
@@ -53,11 +56,12 @@ public class Bench {
     }
 
     public static <T> long runJoinTest(Q<Timed<Or<Data, Data>>, Timed<T>> query, ArrayList<Data> data1,
-            ArrayList<Data> data2, long period) {
+            ArrayList<Data> data2) {
         Algo<Timed<Or<Data, Data>>, Timed<T>> algo = query.eval();
         Sink<Timed<T>> sink = new Sink<Timed<T>>() {
             @Override
             public void next(Timed<T> item) {
+                System.out.println(item);
             }
 
             @Override
@@ -69,43 +73,33 @@ public class Bench {
         algo.init();
 
         long startTime = System.nanoTime();
-        Data next_left = data1.get(0);
-        Data next_right = data2.get(0);
-        long curr_time = Math.min(next_left.start_time, next_right.start_time);
-        long next_stime, next_etime;
-        int i = 1, j = 1;
-        Or<Data, Data> next_item;
+
+        int i = 0, j = 0;
+        long t = 0;
         while (i < data1.size() || j < data2.size()) {
-            if (i == data1.size()) {
-                next_item = Or.right(next_right);
-                next_stime = next_right.start_time;
-                next_etime = next_right.end_time;
-                next_right = data2.get(j++);
-            } else if (j == data2.size()) {
-                next_item = Or.left(next_left);
+            long t_left = (i < data1.size()) ? data1.get(i).start_time : Long.MAX_VALUE;
+            long t_right = (j < data2.size()) ? data2.get(j).start_time : Long.MAX_VALUE;
+
+            Or<Data, Data> next;
+            Data next_left, next_right;
+            long next_stime, next_etime;
+            if (t_left <= t_right) {
+                next_left = data1.get(i);
+                next = Or.left(next_left);
                 next_stime = next_left.start_time;
                 next_etime = next_left.end_time;
-                next_left = data1.get(i++);
-            } else if (next_right.start_time <= next_left.start_time) {
-                next_item = Or.right(next_right);
-                next_stime = next_right.start_time;
-                next_etime = next_right.end_time;
-                next_right = data2.get(j++);
+                i++;
             } else {
-                next_item = Or.left(next_left);
-                next_stime = next_left.start_time;
-                next_etime = next_left.end_time;
-                next_left = data1.get(i++);
+                next_right = data2.get(j);
+                next = Or.right(next_right);
+                next_stime = next_right.start_time;
+                next_etime = next_right.end_time;
+                j++;
             }
-
-            if (curr_time != next_stime) {
-                algo.next(new Punct(next_stime - curr_time));
-                curr_time = next_stime;
-            }
-
-            algo.next(new TTLed<>(next_item, next_etime - next_stime));
+            algo.next(new Punct(next_stime - t));
+            algo.next(new TTLed<>(next, next_etime - next_stime));
+            t = next_stime;
         }
-        ;
 
         algo.end();
         long endTime = System.nanoTime();
@@ -113,16 +107,10 @@ public class Bench {
     }
 
     public static void main(String[] args) {
-        long size = (args.length > 0) ? Long.parseLong(args[0]) : 10000000;
-        String benchmark = (args.length > 1) ? args[1] : "select";
+        String benchmark = (args.length > 0) ? args[0] : "select";
+        long size = (args.length > 1) ? Long.parseLong(args[1]) : 100000000;
         long period = 1;
         ArrayList<Data> src1 = streamGen(size, period);
-        ArrayList<Data> src2 = streamGen(size, period);
-
-        String[] benchmarks = new String[] { "select", "where", "aggregate", "alterdur", "innerjoin" };
-        if (!Arrays.asList(benchmarks).contains(benchmark)) {
-            throw new IllegalArgumentException();
-        }
 
         long runTime = 0;
         switch (benchmark) {
@@ -143,8 +131,10 @@ public class Bench {
                 runTime = runTest(alterdur, src1);
                 break;
             case "innerjoin":
+                ArrayList<Data> src2 = streamGen(size, period);
                 Q<Timed<Or<Data, Data>>, Timed<Float>> innerjoin = QL.join((x, y) -> x.payload + y.payload);
-                runTime = runJoinTest(innerjoin, src1, src2, period);
+                runTime = runJoinTest(innerjoin, src1, src2);
+                break;
             default:
                 System.out.println("Unknown benchmark type");
         }
