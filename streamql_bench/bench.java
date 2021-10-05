@@ -61,7 +61,6 @@ public class Bench {
         Sink<Timed<T>> sink = new Sink<Timed<T>>() {
             @Override
             public void next(Timed<T> item) {
-                System.out.println(item);
             }
 
             @Override
@@ -81,24 +80,19 @@ public class Bench {
             long t_right = (j < data2.size()) ? data2.get(j).start_time : Long.MAX_VALUE;
 
             Or<Data, Data> next;
-            Data next_left, next_right;
-            long next_stime, next_etime;
+            Data next_data;
             if (t_left <= t_right) {
-                next_left = data1.get(i);
-                next = Or.left(next_left);
-                next_stime = next_left.start_time;
-                next_etime = next_left.end_time;
+                next_data = data1.get(i);
+                next = Or.left(next_data);
                 i++;
             } else {
-                next_right = data2.get(j);
-                next = Or.right(next_right);
-                next_stime = next_right.start_time;
-                next_etime = next_right.end_time;
+                next_data = data2.get(j);
+                next = Or.right(next_data);
                 j++;
             }
-            algo.next(new Punct(next_stime - t));
-            algo.next(new TTLed<>(next, next_etime - next_stime));
-            t = next_stime;
+            algo.next(new Punct(next_data.start_time - t));
+            algo.next(new TTLed<>(next, next_data.end_time - next_data.start_time));
+            t = next_data.start_time;
         }
 
         algo.end();
