@@ -297,12 +297,14 @@ namespace Microsoft.StreamProcessing
         }
 
         /// <summary> 
-        /// Calculates Kurtosis (Kur), Root mean square (RMS) and Crest factor (CF) in a vibration signal.
+        /// Calculates various parameters including Kurtosis (Kur), Root mean square (RMS) and
+        /// Crest factor (CF) in a vibration signal.
         /// </summary>
         /// <param name="source">Input stream</param>
+        /// <param name="window">Size of the window</param>
         /// <param name="period">Period of each event</param>
-        /// <returns> An output stream containing tuples - each tuple has the Kurtosis, Root mean square 
-        /// and Crest factor of the input vibration signal </returns>
+        /// <returns> An output stream that calculates the Kurtosis, Root mean square and 
+        /// Crest factor for each window of vibration signal </returns>
         public static IStreamable<TKey, Tuple<float, float, float>> Kurtosis<TKey>(
             this IStreamable<TKey, float> source,
             long window,
@@ -310,25 +312,21 @@ namespace Microsoft.StreamProcessing
         {
             return source
                 .Multicast(s => s
-                    .TumblingWindowLifetime(window * period)
-                    .Average(e => e)
-                    .Join(s, (Avg, Value) => new {Avg, Value})
-                )
-                .Multicast(s => s
-                    .HoppingWindowLifetime(window * period, period)
+                    .TumblingWindowLifetime(window)
                     .Aggregate(
-                        w => w.Max(e => e.Value),
-                        w => w.Average(e => e.Value * e.Value),
-                        (Max, SqAvg) => new {Max, RMS = Math.Sqrt(SqAvg)}
+                        w => w.Max(e => e),
+                        w => w.Average(e => e),
+                        w => w.Average(e => e * e),
+                        (Max, Avg, SqAvg) => new {Max, Avg, RMS = Math.Sqrt(SqAvg)}
                     )
-                    .Join(s, (left, right) => new { Value = right.Value,
-                                                    Avg = right.Avg,
+                    .Join(s, (left, right) => new { Value = right,
+                                                    Avg = left.Avg,
                                                     RMS = left.RMS,
-                                                    CF = (left.Max / left.RMS) }
+                                                    CF = left.Max / left.RMS }
                     )
                 )
                 .Multicast(s => s
-                    .HoppingWindowLifetime(window * period, period)
+                    .TumblingWindowLifetime(window)
                     .Aggregate(
                         w => w.Sum(e => Math.Pow(e.Value - e.Avg, 4))
                     )
