@@ -295,5 +295,50 @@ namespace Microsoft.StreamProcessing
                 .HoppingWindowLifetime(30 * period, period)
                 .Average(e => e);
         }
+
+        /// <summary> 
+        /// Calculates Kurtosis (Kur), Root mean square (RMS) and Crest factor (CF) in a vibration signal.
+        /// </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="period">Period of each event</param>
+        /// <returns> An output stream containing tuples - each tuple has the Kurtosis, Root mean square 
+        /// and Crest factor of the input vibration signal </returns>
+        public static IStreamable<TKey, Tuple<float, float, float>> Kurtosis<TKey>(
+            this IStreamable<TKey, float> source,
+            long window,
+            long period)
+        {
+            return source
+                .Multicast(s => s
+                    .TumblingWindowLifetime(window * period)
+                    .Average(e => e)
+                    .Join(s, (Avg, Value) => new {Avg, Value})
+                )
+                .Multicast(s => s
+                    .HoppingWindowLifetime(window * period, period)
+                    .Aggregate(
+                        w => w.Max(e => e.Value),
+                        w => w.Average(e => e.Value * e.Value),
+                        (Max, SqAvg) => new {Max, RMS = Math.Sqrt(SqAvg)}
+                    )
+                    .Join(s, (left, right) => new { Value = right.Value,
+                                                    Avg = right.Avg,
+                                                    RMS = left.RMS,
+                                                    CF = (left.Max / left.RMS) }
+                    )
+                )
+                .Multicast(s => s
+                    .HoppingWindowLifetime(window * period, period)
+                    .Aggregate(
+                        w => w.Sum(e => Math.Pow(e.Value - e.Avg, 4))
+                    )
+                    .Join(s, (left, right) => new Tuple<float, float, float>( 
+                                                    (float) (left / Math.Pow(right.RMS, 4)),
+                                                    (float) right.RMS,
+                                                    (float) right.CF
+                                                )
+                    )
+                );
+        }
     }
 }
