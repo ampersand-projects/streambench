@@ -302,13 +302,11 @@ namespace Microsoft.StreamProcessing
         /// </summary>
         /// <param name="source">Input stream</param>
         /// <param name="window">Size of the window</param>
-        /// <param name="period">Period of each event</param>
         /// <returns> An output stream that calculates the Kurtosis, Root mean square and 
         /// Crest factor for each window of vibration signal </returns>
         public static IStreamable<TKey, Tuple<float, float, float>> Kurtosis<TKey>(
             this IStreamable<TKey, float> source,
-            long window,
-            long period)
+            long window)
         {
             return source
                 .Multicast(s => s

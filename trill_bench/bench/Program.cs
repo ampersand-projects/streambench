@@ -156,7 +156,7 @@ namespace bench
                 case "kurtosis":
                     time = RunTest(data, stream =>
                         stream
-                            .Kurtosis(100, period)
+                            .Kurtosis(100)
                     );
                     break;
                 default:
