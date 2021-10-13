@@ -295,5 +295,46 @@ namespace Microsoft.StreamProcessing
                 .HoppingWindowLifetime(30 * period, period)
                 .Average(e => e);
         }
+
+        /// <summary> 
+        /// Calculates various parameters including Kurtosis (Kur), Root mean square (RMS) and
+        /// Crest factor (CF) in a vibration signal.
+        /// </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="window">Size of the window</param>
+        /// <returns> An output stream that calculates the Kurtosis, Root mean square and 
+        /// Crest factor for each window of vibration signal </returns>
+        public static IStreamable<TKey, Tuple<float, float, float>> Kurtosis<TKey>(
+            this IStreamable<TKey, float> source,
+            long window)
+        {
+            return source
+                .Multicast(s => s
+                    .TumblingWindowLifetime(window)
+                    .Aggregate(
+                        w => w.Max(e => e),
+                        w => w.Average(e => e),
+                        w => w.Average(e => e * e),
+                        (Max, Avg, SqAvg) => new {Max, Avg, RMS = Math.Sqrt(SqAvg)}
+                    )
+                    .Join(s, (left, right) => new { Value = right,
+                                                    Avg = left.Avg,
+                                                    RMS = left.RMS,
+                                                    CF = left.Max / left.RMS }
+                    )
+                )
+                .Multicast(s => s
+                    .TumblingWindowLifetime(window)
+                    .Aggregate(
+                        w => w.Sum(e => Math.Pow(e.Value - e.Avg, 4))
+                    )
+                    .Join(s, (left, right) => new Tuple<float, float, float>( 
+                                                    (float) (left / Math.Pow(right.RMS, 4)),
+                                                    (float) right.RMS,
+                                                    (float) right.CF
+                                                )
+                    )
+                );
+        }
     }
 }

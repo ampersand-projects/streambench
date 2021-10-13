@@ -153,6 +153,12 @@ namespace bench
                             .PanTom(period)
                     );
                     break;
+                case "kurtosis":
+                    time = RunTest(data, stream =>
+                        stream
+                            .Kurtosis(100)
+                    );
+                    break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
                     return;
