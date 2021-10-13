@@ -1,34 +1,57 @@
 package org.streambench;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.streaming.Duration;
-import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.api.java.function.ForeachFunction;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Hello world!
  */
+class Event {
+    Timestamp start_time;
+    Timestamp end_time;
+    Float payload;
+
+    public Event(Timestamp start_time, Timestamp end_time, Float payload) {
+        this.start_time = start_time;
+        this.end_time = end_time;
+        this.payload = payload;
+    }
+}
+
 public class App {
-    public static void main(String[] args) throws InterruptedException {
-        long period = 1;
-        long size = 10;
+    public static void main(String[] args) {
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("Test")
+                .getOrCreate();
+        spark.sparkContext().setLogLevel("ERROR");
 
-        SparkConf sparkConf = new SparkConf().setAppName("spark_bench");
-        JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, new Duration(1000));
+        List<Row> list = new ArrayList<>();
+        list.add(RowFactory.create(new Timestamp(0), new Timestamp(1), 10.0f));
+        list.add(RowFactory.create(new Timestamp(1), new Timestamp(2), 11.0f));
+        list.add(RowFactory.create(new Timestamp(2), new Timestamp(3), 12.0f));
+        list.add(RowFactory.create(new Timestamp(3), new Timestamp(4), 13.0f));
 
-        JavaReceiverInputDStream<Event> stream = ssc.receiverStream(new TestReceiver(period, size));
-
-        JavaDStream<Float> res = stream.map(new Function<Event, Float>() {
-            @Override
-            public Float call(Event event) throws Exception {
-                return event.payload + 10;
-            }
+        StructType schema = DataTypes.createStructType(new StructField[]{
+                DataTypes.createStructField("start_time", DataTypes.TimestampType, false),
+                DataTypes.createStructField("end_time", DataTypes.TimestampType, false),
+                DataTypes.createStructField("payload", DataTypes.FloatType, false)
         });
-        res.print();
 
-        ssc.start();
-        ssc.awaitTermination();
+        Dataset<Row> stream = spark
+                .createDataFrame(list, schema);
+
+        Dataset<Row> res = stream
+                .groupBy(functions.window(stream.col("start_time"), "2 milliseconds"))
+                .sum("payload");
+
+        res.foreach((ForeachFunction<Row>) e -> System.out.println(e));
     }
 }
