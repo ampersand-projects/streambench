@@ -49,7 +49,7 @@ public class App {
 
     public static void main(String[] args) {
         String benchmark = (args.length > 0) ? args[0] : "select";
-        long size = (args.length > 1) ? Long.parseLong(args[1]) : 100000000;
+        long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
         long period = 1;
 
         SparkSession spark = SparkSession.builder().appName("Test").getOrCreate();
