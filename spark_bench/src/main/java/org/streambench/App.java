@@ -9,18 +9,6 @@ import org.apache.spark.sql.types.StructType;
 import java.sql.Timestamp;
 import java.util.*;
 
-class Event {
-    Timestamp start_time;
-    Timestamp end_time;
-    Float payload;
-
-    public Event(Timestamp start_time, Timestamp end_time, Float payload) {
-        this.start_time = start_time;
-        this.end_time = end_time;
-        this.payload = payload;
-    }
-}
-
 public class App {
     public static Dataset<Row> generateDf(Long size, Long period, SparkSession spark) {
         List<Row> list = new ArrayList<>();
