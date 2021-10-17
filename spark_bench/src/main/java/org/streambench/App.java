@@ -26,13 +26,13 @@ public class App {
         return spark.createDataFrame(list, schema);
     }
 
-    public static long runTest(Dataset<Row> test) {
+    public static double runTest(Dataset<Row> test) {
         long start = System.nanoTime();
         test.foreach((ForeachFunction<Row>) e -> {
             return;
         });
         long end = System.nanoTime();
-        return end - start;
+        return (end - start) / 1e9;
     }
 
     public static void main(String[] args) {
@@ -44,7 +44,7 @@ public class App {
         spark.sparkContext().setLogLevel("ERROR");
 
         Dataset<Row> stream1 = generateDf(size, period, spark).cache();
-        long runTime = 0;
+        double runTime = 0;
         switch (benchmark) {
             case "select":
                 Dataset<Row> select = stream1.select(functions.col("start_time"), functions.col("end_time"),
@@ -72,16 +72,10 @@ public class App {
                         stream1.col("start_time").equalTo(stream2.col("start_time")));
                 runTime = runTest(innerjoin);
                 break;
-            case "outerjoin":
-                Dataset<Row> stream3 = generateDf(size, period, spark).cache();
-                Dataset<Row> outerjoin = stream1.join(stream3,
-                        stream1.col("start_time").equalTo(stream3.col("start_time")), "full_outer");
-                runTime = runTest(outerjoin);
-                break;
             default:
                 System.out.println("Unknown benchmark type");
         }
 
-        System.out.println("Benchmark: " + benchmark + " Execution Time: " + runTime);
+        System.out.printf("Benchmark: %s; Execution Time: %.3f seconds", benchmark, runTime);
     }
 }
