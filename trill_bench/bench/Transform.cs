@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using Microsoft.StreamProcessing.Aggregates;
+using bench;
 
 namespace Microsoft.StreamProcessing
 {
@@ -335,6 +336,19 @@ namespace Microsoft.StreamProcessing
                                                 )
                     )
                 );
+        }
+
+        /// <summary> 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="window"></param>
+        /// <returns> </returns>
+        public static IStreamable<TKey, float> Taxi<TKey>(
+            this IStreamable<TKey, TaxiRide> TaxiRide,
+            IStreamable<TKey, TaxiFare> TaxiFare)
+        {
+            return TaxiRide
+                .Select(e => 1.0f);
         }
     }
 }
