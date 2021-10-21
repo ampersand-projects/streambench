@@ -338,11 +338,13 @@ namespace Microsoft.StreamProcessing
                 );
         }
 
-        /// <summary> 
+        /// <summary>
+        /// Given two sets of matching taxi data, rides and fare, this function computes the 
+        /// average tip per mile, grouped by a hopping window
         /// </summary>
-        /// <param name="source"></param>
-        /// <param name="window"></param>
-        /// <returns> </returns>
+        /// <param name="TaxiRide">Taxi Ride Data</param>
+        /// <param name="TaxiFare">Taxi Fare Data</param>
+        /// <returns> An output stream of average tip per mile, grouped by a hopping window </returns>
         public static IStreamable<TKey, float> Taxi<TKey>(
             this IStreamable<TKey, TaxiRide> TaxiRide,
             IStreamable<TKey, TaxiFare> TaxiFare)
