@@ -23,7 +23,8 @@ namespace bench
             return sw.Elapsed.TotalSeconds;
         }
         
-        static double RunTest<TPayload1, TPayload2, TResult>(Func<IStreamable<Empty, TPayload1>> data1, 
+        static double RunTest<TPayload1, TPayload2, TResult>(
+            Func<IStreamable<Empty, TPayload1>> data1, 
             Func<IStreamable<Empty, TPayload2>> data2,
             Func<IStreamable<Empty, TPayload1>, IStreamable<Empty, TPayload2>, IStreamable<Empty, TResult>> transform)
         {
@@ -162,13 +163,13 @@ namespace bench
                     );       
                     break;
                 case "pantom":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .PanTom(period)
                     );
                     break;
                 case "kurtosis":
-                    time = RunTest(data, stream =>
+                    time = RunTest(DataFn(period, size), stream =>
                         stream
                             .Kurtosis(100)
                     );
