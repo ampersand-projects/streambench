@@ -350,21 +350,15 @@ namespace Microsoft.StreamProcessing
             IStreamable<TKey, TaxiFare> TaxiFare)
         {
             return TaxiRide
-                .Select(e => new { Medallion = e.medallion, 
-                                   HackLicense = e.hack_license,
-                                   VendorId = e.vendor_id,
-                                   PickupTime = e.pickup_datetime,
+                .Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
                                    TripDistance = e.trip_distance }
                 )
                 .Join(TaxiFare.
-                    Select(e => new { Medallion = e.medallion, 
-                                      HackLicense = e.hack_license,
-                                      VendorId = e.vendor_id,
-                                      PickupTime = e.pickup_datetime,
+                    Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
                                       TipAmount = e.tip_amount }
                     ),
-                    left => left.Medallion.ToString() + left.HackLicense.ToString() + left.VendorId + left.PickupTime.ToString(),
-                    right => right.Medallion.ToString() + right.HackLicense.ToString() + right.VendorId + right.PickupTime.ToString(),
+                    left => left.Record,
+                    right => right.Record,
                     (left, right) => new { TripDistance = left.TripDistance, TipAmount = right.TipAmount }
                 )
                 .HoppingWindowLifetime(300, 60)

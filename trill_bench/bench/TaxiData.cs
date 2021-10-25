@@ -17,6 +17,53 @@ namespace bench
             this.hack_license = hack_license;
             this.vendor_id = vendor_id;
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj is TaxiDriver)) {
+                return false;
+            }
+            return (this.medallion == ((TaxiDriver) obj).medallion)
+                && (this.hack_license == ((TaxiDriver) obj).hack_license)
+                && (this.vendor_id == ((TaxiDriver) obj).vendor_id);
+        }
+
+        public override int GetHashCode()
+        {
+            return medallion.GetHashCode() ^ hack_license.GetHashCode() ^ vendor_id.GetHashCode();
+        }
+    }
+
+    public class TaxiRecord
+    {
+        public TaxiDriver driver;
+        public DateTime pickup_datetime;
+
+        public TaxiRecord(int medallion, int hack_license, string vendor_id, DateTime pickup_datetime)
+        {
+            this.driver = new TaxiDriver(medallion, hack_license, vendor_id);
+            this.pickup_datetime = pickup_datetime;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj is TaxiRecord)) {
+                return false;
+            }
+            return (this.driver.Equals(((TaxiRecord) obj).driver))
+                && (this.pickup_datetime.Equals(((TaxiRecord) obj).pickup_datetime));
+        }
+
+        public override int GetHashCode()
+        {
+            return driver.GetHashCode() ^ pickup_datetime.GetHashCode();
+        }
     }
 
     public class TaxiRide
