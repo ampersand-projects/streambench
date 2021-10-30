@@ -3,6 +3,7 @@
 
 #include "tilt_select.h"
 #include "tilt_where.h"
+#include "tilt_aggregate.h"
 #include "tilt_norm.h"
 #include "tilt_ma.h"
 #include "tilt_rsi.h"
@@ -25,6 +26,9 @@ int main(int argc, char** argv)
         time = bench.run();
     } else if (testcase == "where") {
         WhereBench bench(1, size);
+        time = bench.run();
+    } else if (testcase == "aggregate") {
+        AggregateBench bench(1, size, 100);
         time = bench.run();
     } else if (testcase == "normalize") {
         NormBench bench(1, 10000, size);
