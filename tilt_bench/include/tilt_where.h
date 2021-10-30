@@ -9,14 +9,14 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-Op _Where(_sym in, function<Expr(_sym)> filter)
+Op _Where(_sym in, int64_t period, function<Expr(_sym)> filter)
 {
     auto e = in[_pt(0)];
     auto e_sym = _sym("e", e);
     auto pred = filter(e_sym);
     auto cond = _exists(e_sym) && pred;
     auto where_op = _op(
-        _iter(0, 1),
+        _iter(0, period),
         Params{in},
         SymTable{{e_sym, e}},
         cond,
@@ -34,7 +34,7 @@ private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Where(in_sym, [](_sym in) { return _gt(in, _f32(0)); });
+        return _Where(in_sym, period, [](_sym in) { return _gt(in, _f32(0)); });
     }
 
     void init() final
