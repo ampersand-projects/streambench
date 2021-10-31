@@ -102,7 +102,7 @@ private:
     void init() final
     {
         in_reg = create_reg<float>(size);
-        float osize = (float)(iperiod / operiod) * size;
+        float osize = ((float)iperiod / (float)operiod) * size;
         out_reg = create_reg<float>(ceil(osize));
 
         SynthData<float> dataset(iperiod, size);
