@@ -39,7 +39,8 @@ private:
     void init() final
     {
         in_reg = create_reg<float>(size);
-        out_reg = create_reg<float>(size);
+        float osize = (float)size / (float)w;
+        out_reg = create_reg<float>(ceil(osize));
 
         SynthData<float> dataset(period, size);
         dataset.fill(&in_reg);

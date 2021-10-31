@@ -8,14 +8,14 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-Op _Select(_sym in, int64_t period, function<Expr(_sym)> selector)
+Op _Select(_sym in, function<Expr(_sym)> selector)
 {
     auto e = in[_pt(0)];
     auto e_sym = _sym("e", e);
     auto res = selector(e_sym);
     auto res_sym = _sym("res", res);
     auto sel_op = _op(
-        _iter(0, period),
+        _iter(0, 1),
         Params{in},
         SymTable{{e_sym, e}, {res_sym, res}},
         _exists(e_sym),
@@ -33,7 +33,7 @@ private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Select(in_sym, period, [](_sym in) { return in + _f32(10); });
+        return _Select(in_sym, [](_sym in) { return in + _f32(10); });
     }
 
     void init() final

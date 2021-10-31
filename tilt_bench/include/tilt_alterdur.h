@@ -17,7 +17,7 @@ Op _AlterDur(_sym in, int64_t out_dur)
     auto alt_op = _op(
         _iter(0, 1),
         Params{in},
-        SymTable{ {e_sym, e}, {p_sym, p} },
+        SymTable{{e_sym, e}, {p_sym, p}},
         cond,
         e_sym);
     return alt_op;
@@ -25,8 +25,8 @@ Op _AlterDur(_sym in, int64_t out_dur)
 
 class AlterDurBench : public Benchmark {
 public:
-    AlterDurBench(dur_t iperiod, dur_t out_dur, int64_t size) :
-        iperiod(iperiod), out_dur(out_dur), size(size)
+    AlterDurBench(dur_t period, dur_t out_dur, int64_t size) :
+        period(period), out_dur(out_dur), size(size)
     {}
 
 private:
@@ -41,14 +41,14 @@ private:
         in_reg = create_reg<float>(size);
         out_reg = create_reg<float>(size);
 
-        SynthData<float> dataset(iperiod, size);
+        SynthData<float> dataset(period, size);
         dataset.fill(&in_reg);
     }
 
     void execute(intptr_t addr) final
     {
         auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*)) addr;
-        query(0, iperiod * size, &out_reg, &in_reg);
+        query(0, period * size, &out_reg, &in_reg);
     }
 
     void release() final
@@ -61,7 +61,7 @@ private:
     region_t out_reg;
 
     int64_t size;
-    dur_t iperiod;
+    dur_t period;
     dur_t out_dur;
 };
 
