@@ -28,11 +28,11 @@ int main(int argc, char** argv)
     } else if (testcase == "where") {
         WhereBench bench(1, size);
         time = bench.run();
-    } else if (testcase == "alterdur") {
-        AlterDurBench bench(3, 1, size);
-        time = bench.run();
     } else if (testcase == "aggregate") {
         AggregateBench bench(1, size, 100);
+        time = bench.run();
+    } else if (testcase == "alterdur") {
+        AlterDurBench bench(3, 2, size);
         time = bench.run();
     } else if (testcase == "normalize") {
         NormBench bench(1, 10000, size);

@@ -7,30 +7,33 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-Op _AlterDur(_sym in, int64_t iperiod, int64_t operiod)
+Op _AlterDur(_sym in, int64_t out_dur)
 {
     auto e = in[_pt(0)];
     auto e_sym = _sym("e", e);
+    auto p = in[_pt(-out_dur)];
+    auto p_sym = _sym("p", p);
+    auto cond = _exists(e_sym) && _not(_eq(e_sym, p_sym));
     auto alt_op = _op(
-        _iter(0, operiod),
+        _iter(0, 1),
         Params{in},
-        SymTable{{e_sym, e}},
-        _true(),
+        SymTable{ {e_sym, e}, {p_sym, p} },
+        cond,
         e_sym);
     return alt_op;
 }
 
 class AlterDurBench : public Benchmark {
 public:
-    AlterDurBench(dur_t iperiod, dur_t operiod, int64_t size) :
-        iperiod(iperiod), operiod(operiod), size(size)
+    AlterDurBench(dur_t iperiod, dur_t out_dur, int64_t size) :
+        iperiod(iperiod), out_dur(out_dur), size(size)
     {}
 
 private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _AlterDur(in_sym, iperiod, operiod);
+        return _AlterDur(in_sym, out_dur);
     }
 
     void init() final
@@ -59,7 +62,7 @@ private:
 
     int64_t size;
     dur_t iperiod;
-    dur_t operiod;
+    dur_t out_dur;
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_SELECT_H_
