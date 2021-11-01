@@ -2,7 +2,6 @@
 #define TILT_BENCH_INCLUDE_TILT_SELECT_H_
 
 #include "tilt/builder/tilder.h"
-#include "tilt_base.h"
 #include "tilt_bench.h"
 
 using namespace tilt;
