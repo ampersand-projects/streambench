@@ -6,6 +6,7 @@
 #include "tilt_aggregate.h"
 #include "tilt_alterdur.h"
 #include "tilt_innerjoin.h"
+#include "tilt_outerjoin.h"
 #include "tilt_norm.h"
 #include "tilt_ma.h"
 #include "tilt_rsi.h"
@@ -37,6 +38,9 @@ int main(int argc, char** argv)
         time = bench.run();
     } else if (testcase == "innerjoin") {
         InnerJoinBench bench(3, 2, size);
+        time = bench.run();
+    } else if (testcase == "outerjoin") {
+        OuterJoinBench bench(2, 3, size);
         time = bench.run();
     } else if (testcase == "normalize") {
         NormBench bench(1, 10000, size);

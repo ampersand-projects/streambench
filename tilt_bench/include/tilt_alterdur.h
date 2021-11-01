@@ -65,4 +65,4 @@ private:
     dur_t out_dur;
 };
 
-#endif  // TILT_BENCH_INCLUDE_TILT_SELECT_H_
+#endif  // TILT_BENCH_INCLUDE_TILT_ALTERDUR_H_

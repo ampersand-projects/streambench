@@ -1,5 +1,5 @@
-#ifndef TILT_BENCH_INCLUDE_TILT_INNERJOIN_H_
-#define TILT_BENCH_INCLUDE_TILT_INNERJOIN_H_
+#ifndef TILT_BENCH_INCLUDE_TILT_OUTERJOIN_H_
+#define TILT_BENCH_INCLUDE_TILT_OUTERJOIN_H_
 
 #include <numeric>
 
@@ -10,9 +10,9 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-class InnerJoinBench : public Benchmark {
+class OuterJoinBench : public Benchmark {
 public:
-    InnerJoinBench(dur_t lperiod, dur_t rperiod, int64_t size) :
+    OuterJoinBench(dur_t lperiod, dur_t rperiod, int64_t size) :
         lperiod(lperiod), rperiod(rperiod), size(size)
     {}
 
@@ -21,7 +21,7 @@ private:
     {
         auto left_sym = _sym("left", tilt::Type(types::FLOAT32, _iter(0, -1)));
         auto right_sym = _sym("right", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Join(left_sym, right_sym);
+        return _OuterJoin(left_sym, right_sym);
     }
 
     void init() final
@@ -41,7 +41,7 @@ private:
     void execute(intptr_t addr) final
     {
         auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*, region_t*)) addr;
-        query(0, min(lperiod, rperiod) * size, &out_reg, &left_reg, &right_reg);
+        query(0, max(lperiod, rperiod) * size, &out_reg, &left_reg, &right_reg);
     }
 
     void release() final
@@ -60,4 +60,4 @@ private:
     dur_t rperiod;
 };
 
-#endif  // TILT_BENCH_INCLUDE_TILT_INNERJOIN_H_
+#endif  // TILT_BENCH_INCLUDE_TILT_OUTERJOIN_H_

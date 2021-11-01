@@ -86,4 +86,27 @@ Op _Join(_sym left, _sym right)
     return join_op;
 }
 
+Op _OuterJoin(_sym left, _sym right)
+{
+    auto e_left = left[_pt(0)];
+    auto e_left_sym = _sym("left", e_left);
+    auto e_right = right[_pt(0)];
+    auto e_right_sym = _sym("right", e_right);
+    auto e_left_val = _sel(_exists(e_left_sym), e_left_sym, _f32(0));
+    auto e_right_val = _sel(_exists(e_right_sym), e_right_sym, _f32(0));
+    auto norm = e_left_val - e_right_val;
+    auto norm_sym = _sym("norm", norm);
+    auto join_op = _op(
+        _iter(0, 1),
+        Params{ left, right },
+        SymTable{
+            {e_left_sym, e_left},
+            {e_right_sym, e_right},
+            {norm_sym, norm},
+        },
+        _true(),
+        norm_sym);
+    return join_op;
+}
+
 #endif  // TILT_BENCH_INCLUDE_TILT_BASE_H_
