@@ -179,7 +179,7 @@ namespace bench
                                    TaxiFareDataFn(period, size),
                                    (stream, stream2) =>
                         stream
-                            .Taxi(stream2)
+                            .Taxi(stream2, 300)
                     );
                     break;
                 default:

@@ -347,7 +347,8 @@ namespace Microsoft.StreamProcessing
         /// <returns> An output stream of average tip per mile, grouped by a hopping window </returns>
         public static IStreamable<TKey, float> Taxi<TKey>(
             this IStreamable<TKey, TaxiRide> TaxiRide,
-            IStreamable<TKey, TaxiFare> TaxiFare)
+            IStreamable<TKey, TaxiFare> TaxiFare,
+            long window)
         {
             return TaxiRide
                 .Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
@@ -361,7 +362,7 @@ namespace Microsoft.StreamProcessing
                     right => right.Record,
                     (left, right) => new { TripDistance = left.TripDistance, TipAmount = right.TipAmount }
                 )
-                .HoppingWindowLifetime(300, 60)
+                .TumblingWindowLifetime(window)
                 .Aggregate(
                     w => w.Sum(e => e.TripDistance),
                     w => w.Sum(e => e.TipAmount),
