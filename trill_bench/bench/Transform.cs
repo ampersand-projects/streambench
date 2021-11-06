@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using Microsoft.StreamProcessing.Aggregates;
+using bench;
 
 namespace Microsoft.StreamProcessing
 {
@@ -334,6 +335,38 @@ namespace Microsoft.StreamProcessing
                                                     (float) right.CF
                                                 )
                     )
+                );
+        }
+
+        /// <summary>
+        /// Given two sets of matching taxi data, rides and fare, this function computes the 
+        /// average tip per mile, grouped by a hopping window
+        /// </summary>
+        /// <param name="TaxiRide">Taxi Ride Data</param>
+        /// <param name="TaxiFare">Taxi Fare Data</param>
+        /// <returns> An output stream of average tip per mile, grouped by a hopping window </returns>
+        public static IStreamable<TKey, float> Taxi<TKey>(
+            this IStreamable<TKey, TaxiRide> TaxiRide,
+            IStreamable<TKey, TaxiFare> TaxiFare,
+            long window)
+        {
+            return TaxiRide
+                .Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
+                                   TripDistance = e.trip_distance }
+                )
+                .Join(TaxiFare.
+                    Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
+                                      TipAmount = e.tip_amount }
+                    ),
+                    left => left.Record,
+                    right => right.Record,
+                    (left, right) => new { TripDistance = left.TripDistance, TipAmount = right.TipAmount }
+                )
+                .TumblingWindowLifetime(window)
+                .Aggregate(
+                    w => w.Sum(e => e.TripDistance),
+                    w => w.Sum(e => e.TipAmount),
+                    (TripDistanceSum, TipAmountSum) => (float) TipAmountSum / TripDistanceSum
                 );
         }
     }
