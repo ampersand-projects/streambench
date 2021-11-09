@@ -21,47 +21,48 @@ int main(int argc, char** argv)
 {
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
+    int64_t period = 1;
 
     double time = 0;
 
     if (testcase == "select") {
-        SelectBench bench(1, size);
+        SelectBench bench(period, size);
         time = bench.run();
     } else if (testcase == "where") {
-        WhereBench bench(1, size);
+        WhereBench bench(period, size);
         time = bench.run();
     } else if (testcase == "aggregate") {
-        AggregateBench bench(1, size, 100);
+        AggregateBench bench(period, size, 1000 * period);
         time = bench.run();
     } else if (testcase == "alterdur") {
         AlterDurBench bench(3, 2, size);
         time = bench.run();
     } else if (testcase == "innerjoin") {
-        InnerJoinBench bench(3, 2, size);
+        InnerJoinBench bench(period, period, size);
         time = bench.run();
     } else if (testcase == "outerjoin") {
-        OuterJoinBench bench(2, 3, size);
+        OuterJoinBench bench(period, period, size);
         time = bench.run();
     } else if (testcase == "normalize") {
-        NormBench bench(1, 10000, size);
+        NormBench bench(period, 10000, size);
         time = bench.run();
     } else if (testcase == "fillmean") {
-        ImputeBench bench(1, 10000, size);
+        ImputeBench bench(period, 10000, size);
         time = bench.run();
     } else if (testcase == "resample") {
         ResampleBench bench(4, 5, 1000, size);
         time = bench.run();
     } else if (testcase == "algotrading") {
-        MOCABench bench(1, 20, 50, 100, size);
+        MOCABench bench(period, 20, 50, 100, size);
         time = bench.run();
     } else if (testcase == "rsi") {
-        RSIBench bench(1, 14, 100, size);
+        RSIBench bench(period, 14, 100, size);
         time = bench.run();
     } else if (testcase == "largeqty") {
-        LargeQtyBench bench(1, 10, 100, size);
+        LargeQtyBench bench(period, 10, 100, size);
         time = bench.run();
     } else if (testcase == "pantom") {
-        PeakBench bench(1, 30, 100, size);
+        PeakBench bench(period, 30, 100, size);
         time = bench.run();
     } else {
         throw runtime_error("Invalid testcase");

@@ -21,7 +21,7 @@ private:
     {
         auto left_sym = _sym("left", tilt::Type(types::FLOAT32, _iter(0, -1)));
         auto right_sym = _sym("right", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Join(left_sym, right_sym);
+        return _Join(left_sym, right_sym, [](_sym left, _sym right) { return left + right; });
     }
 
     void init() final

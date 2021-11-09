@@ -62,14 +62,14 @@ Expr _Average(_sym win, function<Expr(Expr)> selector)
     return _red(win, _new(vector<Expr>{_f32(0), _f32(0)}), acc);
 }
 
-Op _Join(_sym left, _sym right)
+Op _Join(_sym left, _sym right, function<Expr(_sym, _sym)> op)
 {
     auto e_left = left[_pt(0)];
     auto e_left_sym = _sym("left", e_left);
     auto e_right = right[_pt(0)];
     auto e_right_sym = _sym("right", e_right);
-    auto norm = e_left_sym - e_right_sym;
-    auto norm_sym = _sym("norm", norm);
+    auto res = op(e_left_sym, e_right_sym);
+    auto res_sym = _sym("res", res);
     auto left_exist = _exists(e_left_sym);
     auto right_exist = _exists(e_right_sym);
     auto join_cond = left_exist && right_exist;
@@ -79,33 +79,40 @@ Op _Join(_sym left, _sym right)
         SymTable{
             {e_left_sym, e_left},
             {e_right_sym, e_right},
-            {norm_sym, norm},
+            {res_sym, res},
         },
         join_cond,
-        norm_sym);
+        res_sym);
     return join_op;
 }
 
-Op _OuterJoin(_sym left, _sym right)
+Op _OuterJoin(_sym left, _sym right, function<Expr(_sym, _sym)> op)
 {
     auto e_left = left[_pt(0)];
     auto e_left_sym = _sym("left", e_left);
     auto e_right = right[_pt(0)];
     auto e_right_sym = _sym("right", e_right);
-    auto e_left_val = _sel(_exists(e_left_sym), e_left_sym, _f32(0));
-    auto e_right_val = _sel(_exists(e_right_sym), e_right_sym, _f32(0));
-    auto norm = e_left_val - e_right_val;
-    auto norm_sym = _sym("norm", norm);
+    auto left_exist = _exists(e_left_sym);
+    auto right_exist = _exists(e_right_sym);
+    auto e_left_val = _sel(left_exist, e_left_sym, _f32(0));
+    auto e_left_val_sym = _sym("left_val", e_left_val);
+    auto e_right_val = _sel(right_exist, e_right_sym, _f32(0));
+    auto e_right_val_sym = _sym("right_val", e_right_val);
+    auto res = op(e_left_val_sym, e_right_val_sym);
+    auto res_sym = _sym("res", res);
+    auto join_cond = left_exist || right_exist;
     auto join_op = _op(
         _iter(0, 1),
         Params{ left, right },
         SymTable{
             {e_left_sym, e_left},
             {e_right_sym, e_right},
-            {norm_sym, norm},
+            {e_left_val_sym, e_left_val},
+            {e_right_val_sym, e_right_val},
+            {res_sym, res},
         },
-        _true(),
-        norm_sym);
+        join_cond,
+        res_sym);
     return join_op;
 }
 

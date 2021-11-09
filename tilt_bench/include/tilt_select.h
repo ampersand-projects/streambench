@@ -32,7 +32,7 @@ private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
-        return _Select(in_sym, [](_sym in) { return in + _f32(10); });
+        return _Select(in_sym, [](_sym in) { return in + _f32(3); });
     }
 
     void init() final
