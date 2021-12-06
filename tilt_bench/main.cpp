@@ -15,6 +15,7 @@
 #include "tilt_peak.h"
 #include "tilt_resample.h"
 #include "tilt_kurt.h"
+#include "tilt_taxi.h"
 
 using namespace std;
 
@@ -67,6 +68,9 @@ int main(int argc, char** argv)
         time = bench.run();
     } else if (testcase == "kurtosis") {
         KurtBench bench(period, 100, size);
+        time = bench.run();
+    } else if (testcase == "taxi") {
+        TaxiBench bench(100, 100, 8000000);
         time = bench.run();
     } else {
         throw runtime_error("Invalid testcase");
