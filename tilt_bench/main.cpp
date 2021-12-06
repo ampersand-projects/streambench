@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         ResampleBench bench(4, 5, 1000, size);
         time = bench.run();
     } else if (testcase == "algotrading") {
-        MOCABench bench(period, 20, 50, 100, size);
+        MOCABench bench(period, 20, 50, 100, size, par);
         time = bench.run();
     } else if (testcase == "rsi") {
         RSIBench bench(period, 14, 100, size);

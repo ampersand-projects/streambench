@@ -1,6 +1,8 @@
 #ifndef TILT_BENCH_INCLUDE_TILT_MA_H_
 #define TILT_BENCH_INCLUDE_TILT_MA_H_
 
+#include <thread>
+
 #include "tilt/builder/tilder.h"
 #include "tilt_base.h"
 #include "tilt_bench.h"
@@ -112,8 +114,8 @@ struct MOCAState {
 
 class MOCABench : public Benchmark {
 public:
-    MOCABench(int64_t period, int64_t w_short, int64_t w_long, int64_t scale, int64_t size) :
-        period(period), w_short(w_short), w_long(w_long), scale(scale), size(size)
+    MOCABench(int64_t period, int64_t w_short, int64_t w_long, int64_t scale, int64_t size, int par) :
+        period(period), w_short(w_short), w_long(w_long), scale(scale), size(size), par(par)
     {}
 
 private:
@@ -125,25 +127,38 @@ private:
 
     void init() final
     {
-        in_reg = create_reg<float>(size);
-        state_reg = create_reg<MOCAState>(scale);
-        out_reg = create_reg<bool>(size);
+        for (int i=0; i<par; i++) {
+            in_regs.push_back(create_reg<float>(size));
+            state_regs.push_back(create_reg<MOCAState>(scale));
+            out_regs.push_back(create_reg<float>(size));
 
-        SynthData<float> dataset(period, size);
-        dataset.fill(&in_reg);
+            SynthData<float> dataset(period, size);
+            dataset.fill(&in_regs[i]);
+        }
     }
 
     void execute(intptr_t addr) final
     {
         auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*, region_t*)) addr;
-        query(0, period * size, &out_reg, &in_reg, &state_reg);
+
+        std::vector<thread> split;
+        for (int i=0; i<par; i++) {
+            split.push_back(thread([=] () {
+                query(0, period * size, &out_regs[i], &in_regs[i], &state_regs[i]);
+            }));
+        }
+        for (int i=0; i<par; i++) {
+            split[i].join();
+        }
     }
 
     void release() final
     {
-        release_reg(&in_reg);
-        release_reg(&state_reg);
-        release_reg(&out_reg);
+        for (int i=0; i<par; i++) {
+            release_reg(&in_regs[i]);
+            release_reg(&state_regs[i]);
+            release_reg(&out_regs[i]);
+        }
     }
 
     dur_t period;
@@ -151,9 +166,10 @@ private:
     int64_t w_long;
     int64_t scale;
     int64_t size;
-    region_t in_reg;
-    region_t state_reg;
-    region_t out_reg;
+    int par;
+    vector<region_t> in_regs;
+    vector<region_t> state_regs;
+    vector<region_t> out_regs;
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_MA_H_
