@@ -127,13 +127,13 @@ private:
 
     void init() final
     {
-        for (int i=0; i<par; i++) {
-            in_regs.push_back(create_reg<float>(size));
-            state_regs.push_back(create_reg<MOCAState>(scale));
-            out_regs.push_back(create_reg<float>(size));
+        in_reg = create_reg<float>(size);
+        SynthData<float> dataset(period, size);
+        dataset.fill(&in_reg);
 
-            SynthData<float> dataset(period, size);
-            dataset.fill(&in_regs[i]);
+        for (int i=0; i<par; i++) {
+            state_regs.push_back(create_reg<MOCAState>(scale));
+            out_regs.push_back(create_reg<float>(1000));
         }
     }
 
@@ -144,7 +144,7 @@ private:
         std::vector<thread> split;
         for (int i=0; i<par; i++) {
             split.push_back(thread([=] () {
-                query(0, period * size, &out_regs[i], &in_regs[i], &state_regs[i]);
+                query(0, period * size, &out_regs[i], &in_reg, &state_regs[i]);
             }));
         }
         for (int i=0; i<par; i++) {
@@ -154,8 +154,8 @@ private:
 
     void release() final
     {
+        release_reg(&in_reg);
         for (int i=0; i<par; i++) {
-            release_reg(&in_regs[i]);
             release_reg(&state_regs[i]);
             release_reg(&out_regs[i]);
         }
@@ -167,7 +167,7 @@ private:
     int64_t scale;
     int64_t size;
     int par;
-    vector<region_t> in_regs;
+    region_t in_reg;
     vector<region_t> state_regs;
     vector<region_t> out_regs;
 };
