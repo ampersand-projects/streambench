@@ -65,14 +65,14 @@ namespace bench
 
             Func<IStreamable<Empty, TaxiFare>> TaxiFareDataFn(long p, long s)
             {
-                return () => new TaxiFareData(p, s)
+                return () => new TaxiFareData("/home/anandj/data/code/streambench/data/taxi/fare.csv", 100, 100, 8000000)
                     .ToStreamable()
                     .Cache();
             }
 
             Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long p, long s)
             {
-                return () => new TaxiRideData(p, s)
+                return () => new TaxiRideData("/home/anandj/data/code/streambench/data/taxi/trip.csv", 100, 100, 8000000)
                     .ToStreamable()
                     .Cache();
             }
@@ -179,7 +179,7 @@ namespace bench
                                    TaxiFareDataFn(period, size),
                                    (stream, stream2) =>
                         stream
-                            .Taxi(stream2, 300)
+                            .Taxi(stream2, 8000000)
                     );
                     break;
                 default:

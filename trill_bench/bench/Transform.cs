@@ -351,22 +351,16 @@ namespace Microsoft.StreamProcessing
             long window)
         {
             return TaxiRide
-                .Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
-                                   TripDistance = e.trip_distance }
-                )
-                .Join(TaxiFare.
-                    Select(e => new { Record = new TaxiRecord(e.medallion, e.hack_license, e.vendor_id, e.pickup_datetime),
-                                      TipAmount = e.tip_amount }
-                    ),
-                    left => left.Record,
-                    right => right.Record,
-                    (left, right) => new { TripDistance = left.TripDistance, TipAmount = right.TipAmount }
+                .Join(TaxiFare,
+                    left => left.medallion,
+                    right => right.medallion,
+                    (left, right) => new { TripDistance = left.trip_distance, TipAmount = right.total_amount }
                 )
                 .TumblingWindowLifetime(window)
                 .Aggregate(
                     w => w.Sum(e => e.TripDistance),
                     w => w.Sum(e => e.TipAmount),
-                    (TripDistanceSum, TipAmountSum) => (float) TipAmountSum / TripDistanceSum
+                    (TripDistanceSum, TipAmountSum) => TipAmountSum / TripDistanceSum
                 );
         }
     }
