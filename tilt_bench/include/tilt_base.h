@@ -33,6 +33,26 @@ Expr _Sum(_sym win)
     return _red(win, _f32(0), acc);
 }
 
+Op _WindowSum(_sym in, int64_t w, int64_t p)
+{
+    auto window = in[_win(-w, 0)];
+    auto window_sym = _sym("win", window);
+    auto sum = _Sum(window_sym);
+    auto sum_sym = _sym("sum", sum);
+    auto wc_op = _op(
+        _iter(0, p),
+        Params{ in },
+        SymTable{ {window_sym, window}, {sum_sym, sum} },
+        _true(),
+        sum_sym);
+    return wc_op;
+}
+
+Op _WindowSum(_sym in, int64_t w)
+{
+    return _WindowSum(in, w, w);
+}
+
 Op _WindowAvg(_sym in, int64_t w)
 {
     auto window = in[_win(-w, 0)];

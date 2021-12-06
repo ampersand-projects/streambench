@@ -182,6 +182,18 @@ namespace bench
                             .Taxi(stream2, 300)
                     );
                     break;
+                case "eg1":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .Eg1(10, 20)
+                    );
+                    break;
+                case "eg2":
+                    time = RunTest(DataFn(period, size), stream =>
+                        stream
+                            .Eg2(10, 20)
+                    );
+                    break;
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
                     return;

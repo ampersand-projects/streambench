@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <sys/resource.h>
 
 #include "tilt_select.h"
 #include "tilt_where.h"
@@ -15,11 +16,27 @@
 #include "tilt_peak.h"
 #include "tilt_resample.h"
 #include "tilt_kurt.h"
+#include "tilt_eg.h"
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
+    const rlim_t kStackSize = 2 * 1024 * 1024 * 1024;   // min stack size = 2 GB
+    struct rlimit rl;
+    int result;
+
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0) {
+        if (rl.rlim_cur < kStackSize) {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0) {
+                cerr << "setrlimit returned result = " << result << endl;
+            }
+        }
+    }
+
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
     int64_t period = 1;
@@ -67,6 +84,27 @@ int main(int argc, char** argv)
         time = bench.run();
     } else if (testcase == "kurtosis") {
         KurtBench bench(period, 100, size);
+        time = bench.run();
+    } else if (testcase == "eg1") {
+        Eg1Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg2") {
+        Eg2Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg3") {
+        Eg3Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg4") {
+        Eg4Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg5") {
+        Eg5Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg6") {
+        Eg6Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "eg7") {
+        Eg7Bench bench(period, size, 10, 20, size);
         time = bench.run();
     } else {
         throw runtime_error("Invalid testcase");

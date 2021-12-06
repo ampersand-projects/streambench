@@ -8,21 +8,6 @@
 using namespace tilt;
 using namespace tilt::tilder;
 
-Op _WindowSum(_sym in, int64_t w)
-{
-    auto window = in[_win(-w, 0)];
-    auto window_sym = _sym("win", window);
-    auto sum = _Sum(window_sym);
-    auto sum_sym = _sym("sum", sum);
-    auto wc_op = _op(
-        _iter(0, w),
-        Params{ in },
-        SymTable{ {window_sym, window}, {sum_sym, sum} },
-        _true(),
-        sum_sym);
-    return wc_op;
-}
-
 class AggregateBench : public Benchmark {
 public:
     AggregateBench(dur_t period, int64_t size, int64_t w) :

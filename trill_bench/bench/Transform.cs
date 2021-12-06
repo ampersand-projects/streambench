@@ -369,5 +369,45 @@ namespace Microsoft.StreamProcessing
                     (TripDistanceSum, TipAmountSum) => (float) TipAmountSum / TripDistanceSum
                 );
         }
+        
+        /// <summary> 
+        /// </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="window">Size of the window</param>
+        /// <returns> An output stream that calculates the Kurtosis, Root mean square and 
+        /// Crest factor for each window of vibration signal </returns>
+        public static IStreamable<TKey, bool> Eg1<TKey>(
+            this IStreamable<TKey, float> source,
+            long win1, long win2)
+        {
+            return source
+                .Multicast(s => s
+                    .HoppingWindowLifetime(win1, win1)
+                    .Sum(e => e)
+                    .Join(s.HoppingWindowLifetime(win2, win1).Sum(e => e),
+                        (avg1, avg2) => new Tuple<float, float>(avg1, avg2)
+                    )
+                )
+                .Select(e => e.Item1 > e.Item2);
+        }
+        
+        /// <summary> 
+        /// </summary>
+        /// <param name="source">Input stream</param>
+        /// <param name="window">Size of the window</param>
+        /// <returns> An output stream that calculates the Kurtosis, Root mean square and 
+        /// Crest factor for each window of vibration signal </returns>
+        public static IStreamable<TKey, bool> Eg2<TKey>(
+            this IStreamable<TKey, float> source,
+            long win1, long win2)
+        {
+            return source
+                .HoppingWindowLifetime(win1, win1)
+                .Sum(e => e)
+                .Multicast(s => s
+                    .Join(s.ShiftEventLifetime(win1), (l, r) => new Tuple<float, float>(l, (l+r)/2))
+                )
+                .Select(e => e.Item1 > e.Item2);
+        }
     }
 }
