@@ -89,11 +89,7 @@ private:
         std::vector<thread> split;
         for (int i=0; i<par; i++) {
             split.push_back(thread([=] () {
-                auto start = i * size * period / par;
-                auto end = (i + 1) * size * period / par;
-                //cout << i << " - " << start << " " << end << endl;
-                query(start, end, &out_regs[i], &in_regs[i]);
-                //cout << i << " - DONE";
+                query(0, period * size, &out_regs[i], &in_regs[i]);
             }));
         }
         for (int i=0; i<par; i++) {
