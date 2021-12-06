@@ -1,6 +1,8 @@
 #ifndef TILT_BENCH_INCLUDE_TILT_NORM_H_
 #define TILT_BENCH_INCLUDE_TILT_NORM_H_
 
+#include <thread>
+
 #include "tilt/builder/tilder.h"
 #include "tilt_base.h"
 #include "tilt_bench.h"
@@ -58,8 +60,8 @@ Op _Norm(_sym in, int64_t window)
 
 class NormBench : public Benchmark {
 public:
-    NormBench(dur_t period, int64_t window, int64_t size) :
-        period(period), window(window), size(size)
+    NormBench(dur_t period, int64_t window, int64_t size, int par) :
+        period(period), window(window), size(size), par(par)
     {}
 
 private:
@@ -71,30 +73,48 @@ private:
 
     void init() final
     {
-        in_reg = create_reg<float>(size);
-        out_reg = create_reg<float>(size);
+        for (int i=0; i<par; i++) {
+            in_regs.push_back(create_reg<float>(size));
+            out_regs.push_back(create_reg<float>(size));
 
-        SynthData<float> dataset(period, size);
-        dataset.fill(&in_reg);
+            SynthData<float> dataset(period, size);
+            dataset.fill(&in_regs[i]);
+        }
     }
 
     void execute(intptr_t addr) final
     {
         auto query = (region_t* (*)(ts_t, ts_t, region_t*, region_t*)) addr;
-        query(0, period * size, &out_reg, &in_reg);
+
+        std::vector<thread> split;
+        for (int i=0; i<par; i++) {
+            split.push_back(thread([=] () {
+                auto start = i * size * period / par;
+                auto end = (i + 1) * size * period / par;
+                //cout << i << " - " << start << " " << end << endl;
+                query(start, end, &out_regs[i], &in_regs[i]);
+                //cout << i << " - DONE";
+            }));
+        }
+        for (int i=0; i<par; i++) {
+            split[i].join();
+        }
     }
 
     void release() final
     {
-        release_reg(&in_reg);
-        release_reg(&out_reg);
+        for (int i=0; i<par; i++) {
+            release_reg(&in_regs[i]);
+            release_reg(&out_regs[i]);
+        }
     }
 
     int64_t window;
     dur_t period;
     int64_t size;
-    region_t in_reg;
-    region_t out_reg;
+    int par;
+    vector<region_t> in_regs;
+    vector<region_t> out_regs;
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_NORM_H_

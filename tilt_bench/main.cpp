@@ -23,6 +23,7 @@ int main(int argc, char** argv)
 {
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
+    int par = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t period = 1;
 
     double time = 0;
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
         OuterJoinBench bench(period, period, size);
         time = bench.run();
     } else if (testcase == "normalize") {
-        NormBench bench(period, 10000, size);
+        NormBench bench(period, 10000, size, par);
         time = bench.run();
     } else if (testcase == "fillmean") {
         ImputeBench bench(period, 10000, size);
