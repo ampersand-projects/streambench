@@ -66,7 +66,7 @@ target_link_libraries(lightsaber
         tbb ibverbs
         pthread dl aio uuid stdc++fs)
 target_compile_options(lightsaber PRIVATE -Wall -Wextra -O3 -march=native)
-target_compile_definitions(lightsaber PUBLIC TCP_OUTPUT)
+# target_compile_definitions(lightsaber PUBLIC TCP_OUTPUT)
 
 add_executable(remotesink remote/remoteSink.cpp)
 target_link_options(remotesink PRIVATE -Wl,--unresolved-symbols=ignore-all)

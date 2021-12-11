@@ -29,7 +29,7 @@ int main(int argc, const char **argv) {
         time += benchmarkQuery->runBenchmark(size, period);
     }
 
-    std::cout << "Testcase: " << testcase <<", Size: " << size
+    std::cout << "Testcase: " << testcase <<", Size: " << size * runs
         << ", Time: " << std::setprecision(3) << time / 1000000 << std::endl;
 
     return 0;

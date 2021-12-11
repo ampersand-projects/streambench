@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <chrono>
+#include <memory>
+#include <cstdlib>
 
 #include <utils/SystemConf.h>
 #include "utils/TupleSchema.h"
@@ -38,12 +40,14 @@ class Benchmark {
     }
 
     void PopulateBufferWithData(int64_t size, int64_t period) {
+        double range = 100;
+
         InputBuffer = new std::vector<char> (size * sizeof(InputSchema));
         auto ptr = (InputSchema *) InputBuffer->data();
         for (unsigned long idx = 0; idx < size; idx++) {
             ptr[idx].st = idx * period;
-            ptr[idx].dur = 1L;
-            ptr[idx].payload = 1.5f;
+            ptr[idx].dur = period;
+            ptr[idx].payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
         }
     }
 
