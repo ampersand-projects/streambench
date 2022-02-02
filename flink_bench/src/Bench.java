@@ -51,8 +51,8 @@ public class Bench {
     }
 
     public static void main(String[] args) throws Exception {
-        String benchmark = (args.length > 0) ? args[0] : "innerjoin";
-        long size = (args.length > 1) ? Long.parseLong(args[1]) : 10;
+        String benchmark = (args.length > 0) ? args[0] : "select";
+        long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
         long period = 1;
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -66,12 +66,14 @@ public class Bench {
                         return new Data(data.start_time, data.end_time, data.payload + 3.0f);
                     }
                 });
+                break;
             case "where":
                 DataStream<Data> where = stream1.filter(new FilterFunction<Data>() {
                     public boolean filter(Data data) {
                         return data.payload > 0;
                     }
                 });
+                break;
             case "aggregate":
                 DataStream<Data> aggregate = stream1
                         .windowAll(TumblingEventTimeWindows.of(Time.milliseconds(1000 * period)))
@@ -80,12 +82,14 @@ public class Bench {
                                 return new Data(x.start_time, y.end_time, x.payload + y.payload);
                             }
                         });
+                break;
             case "alterdur":
                 DataStream<Data> alterdur = stream1.map(new MapFunction<Data, Data>() {
                     public Data map(Data data) {
                         return new Data(data.start_time, data.start_time + 10 * period, data.payload);
                     }
                 });
+                break;
             case "innerjoin":
                 DataStream<Data> stream2 = streamGen(size, period, env);
                 DataStream<Data> innerjoin = stream1.keyBy(Data::getKey).intervalJoin(stream2.keyBy(Data::getKey))
