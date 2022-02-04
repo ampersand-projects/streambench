@@ -8,3 +8,6 @@
 [submodule "trill_bench/reactive"]
     path = trill_bench/reactive
     url = https://github.com/anandj91/reactive.git
+[submodule "lightsaber_bench/LightSaber"]
+	path = lightsaber_bench/LightSaber
+	url = https://github.com/wzhao18/LightSaber.git
