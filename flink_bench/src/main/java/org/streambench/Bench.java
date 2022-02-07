@@ -1,3 +1,5 @@
+package org.streambench;
+
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -52,7 +54,7 @@ public class Bench {
 
     public static void main(String[] args) throws Exception {
         String benchmark = (args.length > 0) ? args[0] : "select";
-        long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
+        long size = (args.length > 1) ? Long.parseLong(args[1]) : 1000000;
         long period = 1;
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -112,3 +114,4 @@ public class Bench {
         env.execute();
     }
 }
+
