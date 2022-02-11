@@ -7,33 +7,35 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.streaming.api.functions.co.ProcessJoinFunction;
-import org.apache.flink.util.Collector;
+import org.apache.flink.api.common.functions.JoinFunction;
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.util.*;
 
 public class Bench {
     public static class Data {
-        public Long start_time;
-        public Long end_time;
-        public Float payload;
+        public long start_time;
+        public long end_time;
+        public float payload;
         public Integer key;
 
         public Data(long start_time, long end_time, float payload) {
             this.start_time = start_time;
             this.end_time = end_time;
             this.payload = payload;
-            this.key = 0;
         }
-
-        public Integer getKey() {
-            return this.key;
-        }
-
+        
         public String toString() {
-            return "start_time: " + this.start_time.toString() + " end_time: " + this.end_time.toString() + " payload: "
-                    + this.payload.toString();
+            return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " payload: "
+                    + String.valueOf(payload);
+        }
+    }
+
+    private static class ConstKeySelector implements KeySelector<Data, Integer> {
+        @Override
+        public Integer getKey(Data value) {
+            return 0;
         }
     }
 
@@ -52,9 +54,37 @@ public class Bench {
         return with_timestamp;
     }
 
+    public static class SumAggregation implements AggregateFunction<Data, Data, Data> {
+        @Override
+        public Data createAccumulator() {
+            return new Data((long) Integer.MAX_VALUE, 0, 0);
+        }
+
+        @Override
+        public Data add(Data value, Data accumulator) {
+            accumulator.start_time = Math.min(accumulator.start_time, value.start_time);
+            accumulator.end_time = Math.max(accumulator.end_time, value.end_time);
+            accumulator.payload += value.payload;
+            return accumulator;
+        }
+
+        @Override
+        public Data getResult(Data accumulator) {
+            return new Data(accumulator.start_time, accumulator.end_time, accumulator.payload);
+        }
+
+        @Override
+        public Data merge(Data a, Data b) {
+            a.start_time = Math.min(a.start_time, b.start_time);
+            a.end_time = Math.max(a.end_time, b.end_time);
+            a.payload += b.payload;
+            return a;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         String benchmark = (args.length > 0) ? args[0] : "select";
-        long size = (args.length > 1) ? Long.parseLong(args[1]) : 1000000;
+        long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
         long period = 1;
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -79,11 +109,7 @@ public class Bench {
             case "aggregate":
                 DataStream<Data> aggregate = stream1
                         .windowAll(TumblingEventTimeWindows.of(Time.milliseconds(1000 * period)))
-                        .reduce(new ReduceFunction<Data>() {
-                            public Data reduce(Data x, Data y) {
-                                return new Data(x.start_time, y.end_time, x.payload + y.payload);
-                            }
-                        });
+                        .aggregate(new SumAggregation());
                 break;
             case "alterdur":
                 DataStream<Data> alterdur = stream1.map(new MapFunction<Data, Data>() {
@@ -94,19 +120,18 @@ public class Bench {
                 break;
             case "innerjoin":
                 DataStream<Data> stream2 = streamGen(size, period, env);
-                DataStream<Data> innerjoin = stream1.keyBy(Data::getKey).intervalJoin(stream2.keyBy(Data::getKey))
-                        .between(Time.milliseconds(-1), Time.milliseconds(1))
-                        .upperBoundExclusive()
-                        .lowerBoundExclusive()
-                        .process(new ProcessJoinFunction<Data, Data, Data>() {
-
+                DataStream<Data> innerjoin = stream1.join(stream2)
+                        .where(new ConstKeySelector())
+                        .equalTo((new ConstKeySelector()))
+                        .window(TumblingEventTimeWindows.of(Time.milliseconds(1)))
+                        .apply(new JoinFunction<Data, Data, Data>() {
                             @Override
-                            public void processElement(Data left, Data right, Context ctx, Collector<Data> out) {
-                                out.collect(new Data(ctx.getLeftTimestamp(), ctx.getRightTimestamp(),
-                                        left.payload + right.payload));
+                            public Data join(Data first, Data second) {
+                                return new Data(first.start_time, first.end_time, first.payload + second.payload);
                             }
                         });
                 break;
+                
             default:
                 System.out.println("Unknown benchmark type");
         }
@@ -114,4 +139,3 @@ public class Bench {
         env.execute();
     }
 }
-
