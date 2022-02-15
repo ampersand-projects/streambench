@@ -18,7 +18,6 @@ public class Bench {
         public long start_time;
         public long end_time;
         public float payload;
-        public Integer key;
 
         public Data(long start_time, long end_time, float payload) {
             this.start_time = start_time;
