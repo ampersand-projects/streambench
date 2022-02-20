@@ -2,6 +2,10 @@
 #include <iomanip>
 #include <sys/resource.h>
 
+#include <taxi_trip.pb.h>
+#include <data_loader.h>
+#include <taxi/taxi_data_print.h>
+
 #include "tilt_select.h"
 #include "tilt_where.h"
 #include "tilt_aggregate.h"
@@ -22,6 +26,8 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
     const rlim_t kStackSize = 2 * 1024 * 1024 * 1024;   // min stack size = 2 GB
     struct rlimit rl;
     int result;
@@ -35,6 +41,13 @@ int main(int argc, char** argv)
                 cerr << "setrlimit returned result = " << result << endl;
             }
         }
+    }
+
+    data_loader<stream::taxi_trip> loader;
+    while (true) {
+        stream::taxi_trip trip;
+        loader.load_data(trip);
+        cout << trip << endl;
     }
 
     string testcase = (argc > 1) ? argv[1] : "select";
@@ -113,5 +126,6 @@ int main(int argc, char** argv)
     cout << "Testcase: " << testcase <<", Size: " << size
         << ", Time: " << setprecision(3) << time / 1000000 << endl;
 
+    google::protobuf::ShutdownProtobufLibrary();
     return 0;
 }

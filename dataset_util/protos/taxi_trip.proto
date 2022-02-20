@@ -1,0 +1,23 @@
+syntax = "proto2";
+package stream;
+
+option java_multiple_files = true;
+option java_package = "com.stream.taxi.protos";
+option java_outer_classname = "TaxiProtos";
+
+message taxi_trip {
+    required int64 st = 1;
+    required int64 et = 2;
+    required int32 medallion = 3;
+    required int32 hack_license = 4;
+    required string vendor_id = 5;
+    required int32 rate_code = 6;
+    required bool store_and_fwd_flag = 7;
+    required int32 passenger_count = 8;
+    required int32 trip_time_in_secs = 9;
+    required float trip_distance = 10;
+    required float pickup_longitude = 11;
+    required float pickup_latitude = 12;
+    required float dropoff_longitude = 13;
+    required float dropoff_latitude = 14;
+}
