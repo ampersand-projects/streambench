@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 get_filename_component(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 set(Protobuf_IMPORT_DIRS ${PROJECT_ROOT_DIR}/dataset_util/protos)
 
-find_package(Boost 1.78.0 REQUIRED COMPONENTS date_time)
+find_package(Boost 1.78.0 REQUIRED COMPONENTS date_time filesystem)
 find_package(protobuf CONFIG REQUIRED)
 
 if(protobuf_VERBOSE)

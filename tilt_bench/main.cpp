@@ -2,9 +2,8 @@
 #include <iomanip>
 #include <sys/resource.h>
 
-#include <taxi_trip.pb.h>
 #include <data_loader.h>
-#include <taxi_data.h>
+#include <taxi_data_parser.h>
 
 #include "tilt_select.h"
 #include "tilt_where.h"

@@ -2,14 +2,17 @@
 #define DATASET_LOADER_TAXI_DATA_LOADER_H_
 
 #include <string>
+#include <fstream>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/filesystem.hpp>
 
 #include <taxi_trip.pb.h>
 
 #include <data_parser.h>
 
 using namespace std;
+using namespace boost::filesystem;
 
 class taxi_trip_data_parser : public data_parser<stream::taxi_trip>
 {
@@ -30,14 +33,9 @@ private:
         DROPOFF_LONGITUDE,
         DROPOFF_LATITUDE
     };
+    string &dataset_dir;
     boost::posix_time::ptime start_time;
-
-public:
-    taxi_trip_data_parser(fstream &file) :
-        data_parser<stream::taxi_trip>(file),
-        start_time(boost::gregorian::date(1970, 1, 1))
-    {}
-    ~taxi_trip_data_parser(){}
+    const vector<string> foil_folders = {"FOIL2010", "FOIL2011", "FOIL2012", "FOIL2013"};
 
     void gen_data(vector<string> &row, stream::taxi_trip *trip) override {
         int64_t st = this->parse_datetime_to_seconds(row[PICKUP_DATETIME], start_time);
@@ -69,6 +67,45 @@ public:
         trip->set_pickup_latitude(pickup_latitude);
         trip->set_pickup_longitude(pickup_longitude);
         trip->set_dropoff_latitude(dropoff_latitude);
+    }
+
+public:
+    taxi_trip_data_parser(string &dataset_dir) :
+        dataset_dir(dataset_dir),
+        start_time(boost::gregorian::date(1970, 1, 1))
+    {}
+    ~taxi_trip_data_parser(){}
+
+    bool parse() override {
+        const path data_dir(dataset_dir);
+        if (!is_directory(data_dir)) {
+            cerr << "Directory " << dataset_dir << " does not exist." << endl;
+            return false;
+        }
+
+        for (auto &foil_folder : foil_folders) {
+            path foil_dir = data_dir / foil_folder;
+            if (!is_directory(foil_dir)) {
+                cerr << "Directory " << foil_dir << " is skipped because it does not exist" << endl;
+                continue;
+            }
+
+            size_t i = 1;
+            while (true) {
+                path trip_data_file = foil_dir / ("trip_data_" + std::to_string(i) + ".csv");
+                if (!exists(trip_data_file)) {
+                    break;
+                }
+                cerr << "Parsing " << trip_data_file << endl;
+                std::fstream trip_csv_file(trip_data_file.string());
+                parse_csv_file(trip_csv_file);
+
+                trip_csv_file.close();
+                i += 1;
+            }
+        }
+
+        return true;
     }
 };
 
