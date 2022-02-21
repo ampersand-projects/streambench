@@ -2,8 +2,7 @@
 
 #include "taxi_trip.pb.h"
 
-#include <data_parser.h>
-#include <taxi/taxi_data_gen.h>
+#include <taxi_data.h>
 
 using namespace std;
 
@@ -20,8 +19,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    taxi_trip_data_gen data_generator;
-    data_parser<stream::taxi_trip> parser(file, &data_generator);
+    taxi_trip_data_parser parser(file);
     parser.parse();
 
     file.close();

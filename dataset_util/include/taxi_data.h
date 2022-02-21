@@ -7,12 +7,11 @@
 
 #include <taxi_trip.pb.h>
 
-#include <data_gen.h>
+#include <data_parser.h>
 
 using namespace std;
-using namespace boost;
 
-class taxi_trip_data_gen : public data_gen<stream::taxi_trip>
+class taxi_trip_data_parser : public data_parser<stream::taxi_trip>
 {
 private:
     enum TAXI_DATA_INDEX {
@@ -31,13 +30,14 @@ private:
         DROPOFF_LONGITUDE,
         DROPOFF_LATITUDE
     };
-    posix_time::ptime start_time;
+    boost::posix_time::ptime start_time;
 
 public:
-    taxi_trip_data_gen() :
+    taxi_trip_data_parser(fstream &file) :
+        data_parser<stream::taxi_trip>(file),
         start_time(boost::gregorian::date(1970, 1, 1))
     {}
-    ~taxi_trip_data_gen(){}
+    ~taxi_trip_data_parser(){}
 
     void gen_data(vector<string> &row, stream::taxi_trip *trip) override {
         int64_t st = this->parse_datetime_to_seconds(row[PICKUP_DATETIME], start_time);
@@ -71,5 +71,23 @@ public:
         trip->set_dropoff_latitude(dropoff_latitude);
     }
 };
+
+ostream& operator<< (ostream& out, stream::taxi_trip const& trip)
+{
+    out << "taxi_trip[" << trip.st() << ", " << trip.et() << "]: ";
+    out << "medallion: " << trip.medallion() << ", ";
+    out << "hack_license: " << trip.hack_license() << ", ";
+    out << "vendor_id: " << trip.vendor_id() << ", ";
+    out << "rate_code: " << trip.rate_code() << ", ";
+    out << "store_and_fwd_flag: " << trip.store_and_fwd_flag() << ", ";
+    out << "passenger_count: " << trip.passenger_count() << ", ";
+    out << "trip_time_in_secs: " << trip.trip_time_in_secs() << ", ";
+    out << "trip_distance: " << trip.trip_distance() << ", ";
+    out << "pickup_longitude: " << trip.pickup_longitude() << ", ";
+    out << "pickup_latitude: " << trip.pickup_latitude() << ", ";
+    out << "dropoff_longitude: " << trip.dropoff_longitude() << ", ";
+    out << "dropoff_latitude: " << trip.dropoff_latitude();
+    return out;
+}
 
 #endif // DATASET_LOADER_TAXI_DATA_LOADER_H_
