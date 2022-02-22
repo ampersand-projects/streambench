@@ -34,7 +34,7 @@ ostream& operator<< (ostream& out, stream::taxi_trip const& trip)
 
 ostream& operator<< (ostream& out, stream::taxi_fare const& fare)
 {
-    out << "taxi_trip[" << fare.st() << ", " << fare.et() << "]: ";
+    out << "taxi_fare[" << fare.st() << ", " << fare.et() << "]: ";
     out << "medallion: " << fare.medallion() << ", ";
     out << "hack_license: " << fare.hack_license() << ", ";
     out << "vendor_id: " << fare.vendor_id() << ", ";
@@ -44,8 +44,7 @@ ostream& operator<< (ostream& out, stream::taxi_fare const& fare)
     out << "mta_tax: " << fare.mta_tax() << ", ";
     out << "tip_amount: " << fare.tip_amount() << ", ";
     out << "tolls_amount: " << fare.tolls_amount() << ", ";
-    out << "total_amount: " << fare.total_amount() << ", ";
-
+    out << "total_amount: " << fare.total_amount();
     return out;
 }
 
