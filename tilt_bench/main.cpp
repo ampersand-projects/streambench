@@ -42,11 +42,11 @@ int main(int argc, char** argv)
         }
     }
 
-    data_loader<stream::taxi_trip> loader;
+    data_loader<stream::taxi_fare> loader;
     while (true) {
-        stream::taxi_trip trip;
-        loader.load_data(trip);
-        cout << trip << endl;
+        stream::taxi_fare fare;
+        loader.load_data(fare);
+        cout << fare << endl;
     }
 
     string testcase = (argc > 1) ? argv[1] : "select";

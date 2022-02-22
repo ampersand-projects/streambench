@@ -22,9 +22,9 @@ endif()
 include_directories(${PROJECT_ROOT_DIR}/dataset_util/include ${PROTOBUF_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
-add_executable(parser parser.cpp ${Protobuf_IMPORT_DIRS}/taxi_trip.proto)
+add_executable(parser parser.cpp ${Protobuf_IMPORT_DIRS}/taxi.proto)
 
 target_link_libraries(parser protobuf::libprotobuf ${Boost_LIBRARIES})
 
 set(_protobuf_include_path -I ${Protobuf_IMPORT_DIRS})
-protobuf_generate(TARGET parser LANGUAGE cpp PROTOS ${Protobuf_IMPORT_DIRS}/taxi_trip.proto)
+protobuf_generate(TARGET parser LANGUAGE cpp PROTOS ${Protobuf_IMPORT_DIRS}/taxi.proto)

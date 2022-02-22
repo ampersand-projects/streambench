@@ -21,3 +21,18 @@ message taxi_trip {
     required float dropoff_longitude = 13;
     required float dropoff_latitude = 14;
 }
+
+message taxi_fare {
+    required int64 st = 1;
+    required int64 et = 2;
+    required int32 medallion = 3;
+    required int32 hack_license = 4;
+    required string vendor_id = 5;
+    required string payment_type = 6;
+    required float fare_amount = 7;
+    required float surcharge = 8;
+    required float mta_tax = 9;
+    required float tip_amount = 10;
+    required float tolls_amount = 11;
+    required float total_amount = 12;
+}
