@@ -30,7 +30,7 @@ set(easyjit_lib "${CMAKE_BINARY_DIR}/tilt/third_party/easy_jit/bin/EasyJitPass.s
 
 add_subdirectory(tilt/tilt)
 
-add_executable(main main.cpp ${Protobuf_IMPORT_DIRS}/taxi.proto)
+add_executable(main main.cpp)
 
 target_link_libraries(main protobuf::libprotobuf tilt)
 

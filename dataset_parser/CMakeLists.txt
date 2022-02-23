@@ -22,7 +22,7 @@ endif()
 include_directories(${PROJECT_ROOT_DIR}/dataset_util/include ${PROTOBUF_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
-add_executable(parser parser.cpp ${Protobuf_IMPORT_DIRS}/taxi.proto)
+add_executable(parser parser.cpp)
 
 target_link_libraries(parser protobuf::libprotobuf ${Boost_LIBRARIES})
 
