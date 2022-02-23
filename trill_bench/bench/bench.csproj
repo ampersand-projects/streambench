@@ -11,4 +11,8 @@
     <ProjectReference Include="..\Trill\Sources\Core\Microsoft.StreamProcessing\Microsoft.StreamProcessing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.19.4" />
+  </ItemGroup>
+
 </Project>

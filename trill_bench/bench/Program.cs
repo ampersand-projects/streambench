@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Reactive.Linq;
 using Microsoft.StreamProcessing;
+using Google.Protobuf;
+using Stream;
 
 namespace bench
 {
@@ -44,6 +46,10 @@ namespace bench
 
         static void Main(string[] args)
         {
+
+            MessageParser<taxi_trip> parser = new MessageParser<taxi_trip>(() => new taxi_trip());
+            taxi_trip trip = parser.ParseDelimitedFrom(Console.OpenStandardInput());
+            
             string testcase = (args.Length > 0) ? args[0] : "normalize";
             long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
             long period = 1;
