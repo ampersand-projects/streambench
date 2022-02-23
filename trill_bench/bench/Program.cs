@@ -47,8 +47,10 @@ namespace bench
         static void Main(string[] args)
         {
             MessageParser<taxi_fare> parser = new MessageParser<taxi_fare>(() => new taxi_fare());
-            taxi_fare fare = parser.ParseDelimitedFrom(Console.OpenStandardInput());
-            Console.WriteLine(fare.Surcharge);
+            while (true) {
+                taxi_fare fare = parser.ParseDelimitedFrom(Console.OpenStandardInput());
+                Console.WriteLine(fare);
+            }
             
             string testcase = (args.Length > 0) ? args[0] : "normalize";
             long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
