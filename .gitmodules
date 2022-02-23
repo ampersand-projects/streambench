@@ -11,3 +11,6 @@
 [submodule "lightsaber_bench/LightSaber"]
 	path = lightsaber_bench/LightSaber
 	url = https://github.com/wzhao18/LightSaber.git
+[submodule "dataset_util/protobuf"]
+	path = dataset_util/protobuf
+	url = https://github.com/protocolbuffers/protobuf
