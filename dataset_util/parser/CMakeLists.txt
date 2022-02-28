@@ -25,5 +25,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 add_executable(parser parser.cpp)
 target_link_libraries(parser protobuf::libprotobuf ${Boost_LIBRARIES})
 
+file(GLOB PROTO_FILES
+  "${Protobuf_IMPORT_DIRS}/*.proto"
+)
+
 set(_protobuf_include_path -I ${Protobuf_IMPORT_DIRS})
-protobuf_generate(TARGET parser LANGUAGE cpp PROTOS ${Protobuf_IMPORT_DIRS}/taxi.proto)
+protobuf_generate(TARGET parser LANGUAGE cpp PROTOS ${PROTO_FILES})

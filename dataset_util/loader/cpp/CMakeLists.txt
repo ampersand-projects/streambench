@@ -24,5 +24,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 add_executable(loader loader.cpp)
 target_link_libraries(loader protobuf::libprotobuf)
 
+file(GLOB PROTO_FILES
+  "${Protobuf_IMPORT_DIRS}/*.proto"
+)
+
 set(_protobuf_include_path -I ${Protobuf_IMPORT_DIRS})
-protobuf_generate(TARGET loader LANGUAGE cpp PROTOS ${Protobuf_IMPORT_DIRS}/taxi.proto)
+protobuf_generate(TARGET loader LANGUAGE cpp PROTOS ${PROTO_FILES})

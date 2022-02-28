@@ -1,8 +1,7 @@
 #include <iostream>
 
-#include "taxi.pb.h"
-
 #include <taxi_data_parser.h>
+#include <vibration_data_parser.h>
 
 using namespace std;
 
@@ -21,8 +20,11 @@ int main(int argc, char* argv[]) {
     } else if (dataset_name == "taxi_fare") {
         taxi_fare_data_parser parser(dataset_dir);
         parser.parse();
+    } else if (dataset_name == "vibration") {
+        vibration_data_parser parser(dataset_dir);
+        parser.parse();
     } else {
-        throw std::runtime_error("Unknown dataset name.");
+        throw runtime_error("Unknown dataset name.");
     }
     
     google::protobuf::ShutdownProtobufLibrary();
