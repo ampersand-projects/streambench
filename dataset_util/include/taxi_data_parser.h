@@ -1,5 +1,5 @@
-#ifndef DATASET_LOADER_TAXI_DATA_LOADER_H_
-#define DATASET_LOADER_TAXI_DATA_LOADER_H_
+#ifndef DATASET_UTIL_TAXI_DATA_PARSER_H_
+#define DATASET_UTIL_TAXI_DATA_PARSER_H_
 
 #include <string>
 #include <fstream>
@@ -212,4 +212,4 @@ public:
     ~taxi_fare_data_parser(){}
 };
 
-#endif // DATASET_LOADER_TAXI_DATA_LOADER_H_
+#endif // DATASET_UTIL_TAXI_DATA_PARSER_H_

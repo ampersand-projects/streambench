@@ -1,5 +1,5 @@
-#ifndef DATASET_STREAMER_DATA_GEN_DATA_PARSER_H_
-#define DATASET_STREAMER_DATA_GEN_DATA_PARSER_H_
+#ifndef DATASET_UTIL_DATA_PARSER_H_
+#define DATASET_UTIL_DATA_PARSER_H_
 
 #include <fstream>
 
@@ -77,4 +77,4 @@ public:
     data_parser(){}
 };
 
-#endif // DATASET_STREAMER_DATA_GEN_DATA_PARSER_H_
+#endif // DATASET_UTIL_DATA_PARSER_H_
