@@ -17,34 +17,34 @@ using namespace boost::filesystem;
 ostream& operator<< (ostream& out, stream::taxi_trip const& trip)
 {
     out << "taxi_trip[" << trip.st() << ", " << trip.et() << "]: ";
-    out << "medallion: " << trip.medallion() << ", ";
-    out << "hack_license: " << trip.hack_license() << ", ";
-    out << "vendor_id: " << trip.vendor_id() << ", ";
-    out << "rate_code: " << trip.rate_code() << ", ";
-    out << "store_and_fwd_flag: " << trip.store_and_fwd_flag() << ", ";
-    out << "passenger_count: " << trip.passenger_count() << ", ";
-    out << "trip_time_in_secs: " << trip.trip_time_in_secs() << ", ";
-    out << "trip_distance: " << trip.trip_distance() << ", ";
-    out << "pickup_longitude: " << trip.pickup_longitude() << ", ";
-    out << "pickup_latitude: " << trip.pickup_latitude() << ", ";
-    out << "dropoff_longitude: " << trip.dropoff_longitude() << ", ";
-    out << "dropoff_latitude: " << trip.dropoff_latitude();
+    out << "medallion: " << trip.payload().medallion() << ", ";
+    out << "hack_license: " << trip.payload().hack_license() << ", ";
+    out << "vendor_id: " << trip.payload().vendor_id() << ", ";
+    out << "rate_code: " << trip.payload().rate_code() << ", ";
+    out << "store_and_fwd_flag: " << trip.payload().store_and_fwd_flag() << ", ";
+    out << "passenger_count: " << trip.payload().passenger_count() << ", ";
+    out << "trip_time_in_secs: " << trip.payload().trip_time_in_secs() << ", ";
+    out << "trip_distance: " << trip.payload().trip_distance() << ", ";
+    out << "pickup_longitude: " << trip.payload().pickup_longitude() << ", ";
+    out << "pickup_latitude: " << trip.payload().pickup_latitude() << ", ";
+    out << "dropoff_longitude: " << trip.payload().dropoff_longitude() << ", ";
+    out << "dropoff_latitude: " << trip.payload().dropoff_latitude();
     return out;
 }
 
 ostream& operator<< (ostream& out, stream::taxi_fare const& fare)
 {
     out << "taxi_fare[" << fare.st() << ", " << fare.et() << "]: ";
-    out << "medallion: " << fare.medallion() << ", ";
-    out << "hack_license: " << fare.hack_license() << ", ";
-    out << "vendor_id: " << fare.vendor_id() << ", ";
-    out << "payment_type: " << fare.payment_type() << ", ";
-    out << "fare_amount: " << fare.fare_amount() << ", ";
-    out << "surcharge: " << fare.surcharge() << ", ";
-    out << "mta_tax: " << fare.mta_tax() << ", ";
-    out << "tip_amount: " << fare.tip_amount() << ", ";
-    out << "tolls_amount: " << fare.tolls_amount() << ", ";
-    out << "total_amount: " << fare.total_amount();
+    out << "medallion: " << fare.payload().medallion() << ", ";
+    out << "hack_license: " << fare.payload().hack_license() << ", ";
+    out << "vendor_id: " << fare.payload().vendor_id() << ", ";
+    out << "payment_type: " << fare.payload().payment_type() << ", ";
+    out << "fare_amount: " << fare.payload().fare_amount() << ", ";
+    out << "surcharge: " << fare.payload().surcharge() << ", ";
+    out << "mta_tax: " << fare.payload().mta_tax() << ", ";
+    out << "tip_amount: " << fare.payload().tip_amount() << ", ";
+    out << "tolls_amount: " << fare.payload().tolls_amount() << ", ";
+    out << "total_amount: " << fare.payload().total_amount();
     return out;
 }
 
@@ -136,18 +136,18 @@ private:
 
         trip->set_st(st);
         trip->set_et(et);
-        trip->set_medallion(medallion);
-        trip->set_hack_license(hack_license);
-        trip->set_vendor_id(vendor_id);
-        trip->set_rate_code(rate_code);
-        trip->set_store_and_fwd_flag(store_and_fwd_flag);
-        trip->set_passenger_count(passenger_count);
-        trip->set_trip_time_in_secs(trip_time_in_secs);
-        trip->set_trip_distance(trip_distance);
-        trip->set_dropoff_longitude(dropoff_longitude);
-        trip->set_pickup_latitude(pickup_latitude);
-        trip->set_pickup_longitude(pickup_longitude);
-        trip->set_dropoff_latitude(dropoff_latitude);
+        trip->mutable_payload()->set_medallion(medallion);
+        trip->mutable_payload()->set_hack_license(hack_license);
+        trip->mutable_payload()->set_vendor_id(vendor_id);
+        trip->mutable_payload()->set_rate_code(rate_code);
+        trip->mutable_payload()->set_store_and_fwd_flag(store_and_fwd_flag);
+        trip->mutable_payload()->set_passenger_count(passenger_count);
+        trip->mutable_payload()->set_trip_time_in_secs(trip_time_in_secs);
+        trip->mutable_payload()->set_trip_distance(trip_distance);
+        trip->mutable_payload()->set_dropoff_longitude(dropoff_longitude);
+        trip->mutable_payload()->set_pickup_latitude(pickup_latitude);
+        trip->mutable_payload()->set_pickup_longitude(pickup_longitude);
+        trip->mutable_payload()->set_dropoff_latitude(dropoff_latitude);
     }
 
 public:
@@ -192,16 +192,16 @@ private:
 
         fare->set_st(st);
         fare->set_et(et);
-        fare->set_medallion(medallion);
-        fare->set_hack_license(hack_license);
-        fare->set_vendor_id(vendor_id);
-        fare->set_payment_type(payment_type);
-        fare->set_fare_amount(fare_amount);
-        fare->set_surcharge(surcharge);
-        fare->set_mta_tax(mta_tax);
-        fare->set_tip_amount(tip_amount);
-        fare->set_tolls_amount(tolls_amount);
-        fare->set_total_amount(total_amount);
+        fare->mutable_payload()->set_medallion(medallion);
+        fare->mutable_payload()->set_hack_license(hack_license);
+        fare->mutable_payload()->set_vendor_id(vendor_id);
+        fare->mutable_payload()->set_payment_type(payment_type);
+        fare->mutable_payload()->set_fare_amount(fare_amount);
+        fare->mutable_payload()->set_surcharge(surcharge);
+        fare->mutable_payload()->set_mta_tax(mta_tax);
+        fare->mutable_payload()->set_tip_amount(tip_amount);
+        fare->mutable_payload()->set_tolls_amount(tolls_amount);
+        fare->mutable_payload()->set_total_amount(total_amount);
     }
 
 public:

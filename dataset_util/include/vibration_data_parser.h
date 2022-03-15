@@ -18,8 +18,8 @@ using namespace boost::filesystem;
 ostream& operator<< (ostream& out, stream::vibration const& vibration)
 {
     out << "vibration[" << vibration.st() << ", " << vibration.et() << "]: ";
-    out << "channel_1: " << vibration.channel_1() << ", ";
-    out << "channel_2: " << vibration.channel_2();
+    out << "channel_1: " << vibration.payload().channel_1() << ", ";
+    out << "channel_2: " << vibration.payload().channel_2();
     return out;
 }
 
@@ -61,8 +61,8 @@ public:
 
         vibration->set_st(st);
         vibration->set_et(et);
-        vibration->set_channel_1(channel_1);
-        vibration->set_channel_2(channel_2);
+        vibration->mutable_payload()->set_channel_1(channel_1);
+        vibration->mutable_payload()->set_channel_2(channel_2);
     }
 
     bool parse() override {
