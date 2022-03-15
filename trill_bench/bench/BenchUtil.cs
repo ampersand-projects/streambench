@@ -2,8 +2,6 @@
 using System.Diagnostics;
 using System.Reactive.Linq;
 using Microsoft.StreamProcessing;
-using Google.Protobuf;
-using Stream;
 
 namespace bench
 {
@@ -33,6 +31,16 @@ namespace bench
             var stream = data1();
             var stream2 = data2();
 
+            // stream
+            //     .ToStreamEventObservable()
+            //     .Where(e => e.IsData)
+            //     .ForEach(e => Console.WriteLine(e));
+
+            // stream2
+            //     .ToStreamEventObservable()
+            //     .Where(e => e.IsData)
+            //     .ForEach(e => Console.WriteLine(e));
+
             var sw = new Stopwatch();
             sw.Start();
             var s_obs = transform(stream,stream2);
@@ -51,16 +59,16 @@ namespace bench
                 .Cache();
         }
 
-        public static Func<IStreamable<Empty, TaxiFare>> TaxiFareDataFn(long p, long s)
+        public static Func<IStreamable<Empty, TaxiFare>> TaxiFareDataFn(long s)
         {
-            return () => new TaxiFareData(p, s)
+            return () => new TaxiFareData(s)
                 .ToStreamable()
                 .Cache();
         }
 
-        public static Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long p, long s)
+        public static Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long s)
         {
-            return () => new TaxiRideData(p, s)
+            return () => new TaxiRideData(s)
                 .ToStreamable()
                 .Cache();
         }

@@ -12,6 +12,9 @@ using namespace std;
 template<typename T>
 class data_parser
 {
+private:
+    int64_t count = 0;
+    int64_t size;
 protected:
     virtual bool parse() = 0;
     virtual void gen_data(vector<string>&, T*) = 0;
@@ -37,7 +40,7 @@ protected:
         getline(file, line);
 
         vector<string> row;
-        while (true) {
+        while (count < size) {
             if (!parse_csv_line(file, row)) {
                 break;
             }
@@ -48,8 +51,13 @@ protected:
                 return false;
             }
             row.clear();
+            count++;
         }
-        return true;
+        if (count < size) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     bool write_serialized_to_ostream(T &t) {
@@ -74,7 +82,9 @@ protected:
     }
 
 public:
-    data_parser(){}
+    data_parser(int64_t size) :
+        size(size)
+    {}
 };
 
 #endif // DATASET_UTIL_DATA_PARSER_H_

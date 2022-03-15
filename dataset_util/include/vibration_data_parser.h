@@ -48,7 +48,8 @@ protected:
     };
 
 public:
-    vibration_data_parser(string &dataset_dir) :
+    vibration_data_parser(string &dataset_dir, int64_t size) :
+        data_parser<stream::vibration>(size),
         dataset_dir(dataset_dir)
     {}
     ~vibration_data_parser(){}
@@ -91,11 +92,12 @@ public:
 
                 cerr << "Parsing " << data_file << endl;
                 std::fstream data_csv_file(data_file.string());
-                this->parse_csv_file(data_csv_file);
+                if(!this->parse_csv_file(data_csv_file)) {
+                    break;
+                }
 
                 data_csv_file.close();
             }
-
         }
         
         return true;

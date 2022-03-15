@@ -57,13 +57,15 @@ protected:
     const vector<string> foil_folders = {"FOIL2010", "FOIL2011", "FOIL2012", "FOIL2013"};
 
 public:
-    taxi_data_parser(string &dataset_dir, string file_name_prefix) :
+    taxi_data_parser(string &dataset_dir, string file_name_prefix, int64_t size) :
+        data_parser<T>(size),
         dataset_dir(dataset_dir),
         file_name_prefix(file_name_prefix)
     {}
     ~taxi_data_parser(){}
 
     bool parse() override {
+        int64_t count = 0;
         const path data_dir(dataset_dir);
         if (!is_directory(data_dir)) {
             cerr << "Directory " << dataset_dir << " does not exist." << endl;
@@ -85,7 +87,9 @@ public:
                 }
                 cerr << "Parsing " << trip_data_file << endl;
                 std::fstream trip_csv_file(trip_data_file.string());
-                this->parse_csv_file(trip_csv_file);
+                if (!this->parse_csv_file(trip_csv_file)) {
+                    break;
+                }
 
                 trip_csv_file.close();
                 i += 1;
@@ -151,8 +155,8 @@ private:
     }
 
 public:
-    taxi_trip_data_parser(string &dataset_dir) :
-        taxi_data_parser<stream::taxi_trip>(dataset_dir, "trip_data_"),
+    taxi_trip_data_parser(string &dataset_dir, int64_t size) :
+        taxi_data_parser<stream::taxi_trip>(dataset_dir, "trip_data_", size),
         start_time(boost::gregorian::date(1970, 1, 1))
     {}
     ~taxi_trip_data_parser(){}
@@ -205,8 +209,8 @@ private:
     }
 
 public:
-    taxi_fare_data_parser(string &dataset_dir) :
-        taxi_data_parser(dataset_dir, "trip_fare_"),
+    taxi_fare_data_parser(string &dataset_dir, int64_t size) :
+        taxi_data_parser(dataset_dir, "trip_fare_", size),
         start_time(boost::gregorian::date(1970, 1, 1))
     {}
     ~taxi_fare_data_parser(){}
