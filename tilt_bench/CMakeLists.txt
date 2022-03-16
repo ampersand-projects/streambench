@@ -34,5 +34,9 @@ add_executable(main main.cpp)
 
 target_link_libraries(main protobuf::libprotobuf tilt)
 
+file(GLOB PROTO_FILES
+  "${Protobuf_IMPORT_DIRS}/*.proto"
+)
+
 set(_protobuf_include_path -I ${Protobuf_IMPORT_DIRS})
-protobuf_generate(TARGET main LANGUAGE cpp PROTOS ${Protobuf_IMPORT_DIRS}/taxi.proto)
+protobuf_generate(TARGET main LANGUAGE cpp PROTOS ${PROTO_FILES})
