@@ -12,6 +12,11 @@ namespace bench
         {
             var stream = data();
 
+            stream
+                .ToStreamEventObservable()
+                .Where(e => e.IsData)
+                .ForEach(e => Console.WriteLine(e));
+
             var sw = new Stopwatch();
             sw.Start();
             var s_obs = transform(stream);
@@ -69,6 +74,13 @@ namespace bench
         public static Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long s)
         {
             return () => new TaxiRideData(s)
+                .ToStreamable()
+                .Cache();
+        }
+
+        public static Func<IStreamable<Empty, float>> VibrationDataFn(long s)
+        {
+            return () => new VibrationObs(s)
                 .ToStreamable()
                 .Cache();
         }

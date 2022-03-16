@@ -108,7 +108,7 @@ namespace bench
                     );
                     break;
                 case "kurtosis":
-                    time = BenchUtil.RunTest(BenchUtil.DataFn(period, size), stream =>
+                    time = BenchUtil.RunTest(BenchUtil.VibrationDataFn(size), stream =>
                         stream
                             .Kurtosis(100)
                     );
