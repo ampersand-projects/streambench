@@ -114,8 +114,7 @@ namespace bench
                     );
                     break;
                 case "taxi":
-                    time = BenchUtil.RunTest(BenchUtil.TaxiRideDataFn(size),
-                                   BenchUtil.TaxiFareDataFn(size),
+                    time = BenchUtil.RunTest(BenchUtil.TaxiDataFn(size),
                                    (stream, stream2) =>
                         stream
                             .Taxi(stream2, 300)

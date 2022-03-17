@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.StreamProcessing;
@@ -167,19 +168,16 @@ namespace bench
 
     public abstract class TaxiDataObs<T> : IObservable<T>
     {
-        public long size;
         public List<T> data;
         public DateTime datetime_base;
 
-        public TaxiDataObs(long size)
+        public TaxiDataObs()
         {
-            this.size = size;
             this.data = new List<T>();
             this.datetime_base = new DateTime(1970, 1, 1, 0, 0, 0);
-            LoadData();
         }
 
-        public abstract void LoadData();
+        public abstract void LoadDataPoint(stream_event s_event);
 
         public IDisposable Subscribe(IObserver<T> observer)
         {
@@ -219,63 +217,54 @@ namespace bench
 
     public class TaxiFareData : TaxiDataObs<StreamEvent<TaxiFare>>
     {
-        public TaxiFareData(long size) : base(size)
+        public TaxiFareData() : base()
         {}
-        public override void LoadData()
+        public override void LoadDataPoint(stream_event s_event)
         {
-            MessageParser<taxi_fare> parser = new MessageParser<taxi_fare>(() => new taxi_fare());
-            for (int i = 0; i < size; i++)
-            {
-                taxi_fare fare = parser.ParseDelimitedFrom(Console.OpenStandardInput());
-                long st = fare.St;
-                var payload = new TaxiFare(
-                    fare.Payload.Medallion,
-                    fare.Payload.HackLicense,
-                    fare.Payload.VendorId,
-                    this.datetime_base.AddSeconds(st),
-                    fare.Payload.PaymentType,
-                    fare.Payload.FareAmount,
-                    fare.Payload.Surcharge,
-                    fare.Payload.MtaTax,
-                    fare.Payload.TipAmount,
-                    fare.Payload.TollsAmount,
-                    fare.Payload.TotalAmount
-                );
-                data.Add(StreamEvent.CreateInterval(st, st + 1, payload));
-            }
+            long st = s_event.St;
+            var payload = new TaxiFare(
+                s_event.TaxiFare.Medallion,
+                s_event.TaxiFare.HackLicense,
+                s_event.TaxiFare.VendorId,
+                this.datetime_base.AddSeconds(st),
+                s_event.TaxiFare.PaymentType,
+                s_event.TaxiFare.FareAmount,
+                s_event.TaxiFare.Surcharge,
+                s_event.TaxiFare.MtaTax,
+                s_event.TaxiFare.TipAmount,
+                s_event.TaxiFare.TollsAmount,
+                s_event.TaxiFare.TotalAmount
+            );
+            data.Add(StreamEvent.CreateInterval(st, st + 1, payload));
         }
     }
 
     public class TaxiRideData : TaxiDataObs<StreamEvent<TaxiRide>>
     {
-        public TaxiRideData(long size) : base(size)
+        public TaxiRideData() : base()
         {}
-        public override void LoadData()
+        public override void LoadDataPoint(stream_event s_event)
         {
-            MessageParser<taxi_trip> parser = new MessageParser<taxi_trip>(() => new taxi_trip());
-            for (int i = 0; i < size; i++)
-            {
-                taxi_trip trip = parser.ParseDelimitedFrom(Console.OpenStandardInput());
-                long st = trip.St;
-                long et = trip.Et;
-                var payload = new TaxiRide(
-                    trip.Payload.Medallion,
-                    trip.Payload.HackLicense,
-                    trip.Payload.VendorId,
-                    trip.Payload.RateCode,
-                    trip.Payload.StoreAndFwdFlag,
-                    this.datetime_base.AddSeconds(st),
-                    this.datetime_base.AddSeconds(et),
-                    trip.Payload.PassengerCount,
-                    trip.Payload.TripTimeInSecs,
-                    trip.Payload.TripDistance,
-                    trip.Payload.PickupLongitude,
-                    trip.Payload.PickupLatitude,
-                    trip.Payload.DropoffLongitude,
-                    trip.Payload.DropoffLatitude
-                );
-                data.Add(StreamEvent.CreateInterval(st, st + 1, payload));
-            }
+            long st = s_event.St;
+            long et = s_event.Et;
+            Debug.Assert(s_event.PayloadCase == stream_event.PayloadOneofCase.TaxiTrip);
+            var payload = new TaxiRide(
+                s_event.TaxiTrip.Medallion,
+                s_event.TaxiTrip.HackLicense,
+                s_event.TaxiTrip.VendorId,
+                s_event.TaxiTrip.RateCode,
+                s_event.TaxiTrip.StoreAndFwdFlag,
+                this.datetime_base.AddSeconds(st),
+                this.datetime_base.AddSeconds(et),
+                s_event.TaxiTrip.PassengerCount,
+                s_event.TaxiTrip.TripTimeInSecs,
+                s_event.TaxiTrip.TripDistance,
+                s_event.TaxiTrip.PickupLongitude,
+                s_event.TaxiTrip.PickupLatitude,
+                s_event.TaxiTrip.DropoffLongitude,
+                s_event.TaxiTrip.DropoffLatitude
+            );
+            data.Add(StreamEvent.CreateInterval(st, st + 1, payload));
         }
     }
 }

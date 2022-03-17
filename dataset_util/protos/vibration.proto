@@ -6,12 +6,6 @@ option java_package = "com.stream.vibration.protos";
 option java_outer_classname = "VibrationProtos";
 
 message vibration {
-    int64 st = 1;
-    int64 et = 2;
-    vibration_payload payload = 3;
-}
-
-message vibration_payload {
     float channel_1 = 1;
     float channel_2 = 2;
 }

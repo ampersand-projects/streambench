@@ -6,12 +6,6 @@ option java_package = "com.stream.taxi.protos";
 option java_outer_classname = "TaxiProtos";
 
 message taxi_trip {
-    int64 st = 1;
-    int64 et = 2;
-    taxi_trip_payload payload = 3;
-}
-
-message taxi_trip_payload {
     int32 medallion = 1;
     int32 hack_license = 2;
     string vendor_id = 3;
@@ -27,12 +21,6 @@ message taxi_trip_payload {
 }
 
 message taxi_fare {
-    int64 st = 1;
-    int64 et = 2;
-    taxi_fare_payload payload = 3;
-}
-
-message taxi_fare_payload {
     int32 medallion = 1;
     int32 hack_license = 2;
     string vendor_id = 3;

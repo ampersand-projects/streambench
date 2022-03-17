@@ -3,7 +3,7 @@
 #include <sys/resource.h>
 
 #include <data_loader.h>
-#include <taxi_data_parser.h>
+#include <data_printer.h>
 
 #include "tilt_select.h"
 #include "tilt_where.h"
@@ -42,18 +42,20 @@ int main(int argc, char** argv)
         }
     }
 
-    data_loader<stream::taxi_fare> loader;
-    while (true) {
-        stream::taxi_fare fare;
-        loader.load_data(fare);
-        cout << fare << endl;
-    }
-
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
     int64_t period = 1;
 
     double time = 0;
+
+    data_loader loader;
+    for (int i = 0; i < size; i++) {
+        stream::stream_event event;
+        if (!loader.load_data(event)) {
+            break;
+        }
+        cout << event << endl;
+    }
 
     if (testcase == "select") {
         SelectBench bench(period, size);

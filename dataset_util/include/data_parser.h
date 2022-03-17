@@ -7,17 +7,15 @@
 
 #include <google/protobuf/util/delimited_message_util.h>
 
+#include <stream_event.pb.h>
+
 using namespace std;
 
-template<typename T>
 class data_parser
 {
-private:
-    int64_t count = 0;
-    int64_t size;
 protected:
     virtual bool parse() = 0;
-    virtual void gen_data(vector<string>&, T*) = 0;
+    virtual void gen_data(vector<string>&, stream::stream_event*, int flag = 0) = 0;
 
     bool parse_csv_line(fstream &file, vector<string> &row) {
         string line;
@@ -35,32 +33,26 @@ protected:
 		return false;
     }
 
-    bool parse_csv_file(fstream &file) {
+    void parse_csv_file(fstream &file, int flag = 0) {
         string line;
         getline(file, line);
 
         vector<string> row;
-        while (count < size) {
+        while (true) {
             if (!parse_csv_line(file, row)) {
                 break;
             }
 
-            T data;
-            gen_data(row, &data);
+            stream::stream_event data;
+            gen_data(row, &data, flag);
             if (!write_serialized_to_ostream(data)) {
-                return false;
+                break;
             }
             row.clear();
-            count++;
-        }
-        if (count < size) {
-            return true;
-        } else {
-            return false;
         }
     }
 
-    bool write_serialized_to_ostream(T &t) {
+    bool write_serialized_to_ostream(stream::stream_event &t) {
         if (!google::protobuf::util::SerializeDelimitedToOstream(t, &cout)) {
             cerr << "Fail to serialize data into output stream" << endl;
             return false;
@@ -82,9 +74,7 @@ protected:
     }
 
 public:
-    data_parser(int64_t size) :
-        size(size)
-    {}
+    data_parser(){}
 };
 
 #endif // DATASET_UTIL_DATA_PARSER_H_

@@ -68,20 +68,20 @@ namespace bench
 
     public class VibrationObs : DatasetObs
     {
-        private MessageParser<vibration> parser;
+        private MessageParser<stream_event> parser;
         
         public override void LoadDataPoint()
         {
-            vibration vibration = parser.ParseDelimitedFrom(Console.OpenStandardInput());
-            long st = vibration.St;
-            long et = vibration.Et;
-            float payload = vibration.Payload.Channel1;
+            stream_event s_event = parser.ParseDelimitedFrom(Console.OpenStandardInput());
+            long st = s_event.St;
+            long et = s_event.Et;
+            float payload = s_event.Vibration.Channel1;
             data.Add(StreamEvent.CreateInterval(st, et, payload));
         }
 
         public VibrationObs(long size) : base(size)
         {
-            this.parser = new MessageParser<vibration>(() => new vibration());
+            this.parser = new MessageParser<stream_event>(() => new stream_event());
             LoadData();
         }
     }

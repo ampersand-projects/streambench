@@ -8,27 +8,22 @@ using namespace std;
 int main(int argc, char* argv[]) {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    if (argc < 4 || argc % 3 != 1) {
-        cerr << "Usage: [<dataset directory> <dataset_name> <size>]" << endl;
+    if (argc != 3) {
+        cerr << "Usage: <dataset_name> <dataset directory>" << endl;
+        return 1;
     }
 
-    for (int i = 0; i < argc / 3; i++) {
-        string dataset_dir = argv[1 + i * 3];
-        string dataset_name = argv[2 + i * 3];
-        int64_t size = stol(argv[3 + i * 3]);
+    string dataset_name = argv[1];
+    string dataset_dir = argv[2];
 
-        if (dataset_name == "taxi_trip") {
-            taxi_trip_data_parser parser(dataset_dir, size);
-            parser.parse();
-        } else if (dataset_name == "taxi_fare") {
-            taxi_fare_data_parser parser(dataset_dir, size);
-            parser.parse();
-        } else if (dataset_name == "vibration") {
-            vibration_data_parser parser(dataset_dir, size);
-            parser.parse();
-        } else {
-            throw runtime_error("Unknown dataset name.");
-        }
+    if (dataset_name.find("taxi") != string::npos) {
+        taxi_data_parser parser(dataset_name, dataset_dir);
+        parser.parse();
+    } else if (dataset_name == "vibration") {
+        vibration_data_parser parser(dataset_dir);
+        parser.parse();
+    } else {
+        throw runtime_error("Unknown dataset name.");
     }
     
     google::protobuf::ShutdownProtobufLibrary();

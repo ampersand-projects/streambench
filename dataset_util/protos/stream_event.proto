@@ -1,0 +1,20 @@
+
+syntax = "proto3";
+package stream;
+
+import "taxi.proto";
+import "vibration.proto";
+
+option java_multiple_files = true;
+option java_package = "com.stream.generic.protos";
+option java_outer_classname = "StreamEventProtos";
+
+message stream_event {
+    int64 st = 1;
+    int64 et = 2;
+    oneof payload {
+        taxi_trip taxi_trip = 3;
+        taxi_fare taxi_fare = 4;
+        vibration vibration = 5;
+    }
+}

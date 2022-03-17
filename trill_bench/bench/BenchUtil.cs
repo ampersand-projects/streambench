@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Reactive.Linq;
 using Microsoft.StreamProcessing;
+using Google.Protobuf;
+using Stream;
 
 namespace bench
 {
@@ -36,15 +38,34 @@ namespace bench
             var stream = data1();
             var stream2 = data2();
 
-            // stream
-            //     .ToStreamEventObservable()
-            //     .Where(e => e.IsData)
-            //     .ForEach(e => Console.WriteLine(e));
+            var sw = new Stopwatch();
+            sw.Start();
+            var s_obs = transform(stream,stream2);
 
-            // stream2
-            //     .ToStreamEventObservable()
-            //     .Where(e => e.IsData)
-            //     .ForEach(e => Console.WriteLine(e));
+            s_obs
+                .ToStreamEventObservable()
+                .Wait();
+            sw.Stop();
+            return sw.Elapsed.TotalSeconds;
+        }
+
+       public static double RunTest<TPayload1, TPayload2, TResult>(
+            Func<Tuple<IStreamable<Empty, TPayload1>, IStreamable<Empty, TPayload2>>> data,
+            Func<IStreamable<Empty, TPayload1>, IStreamable<Empty, TPayload2>, IStreamable<Empty, TResult>> transform)
+        {
+            var result = data();
+            var stream = result.Item1;
+            var stream2 = result.Item2;
+
+            stream
+                .ToStreamEventObservable()
+                .Where(e => e.IsData)
+                .ForEach(e => Console.WriteLine(e));
+
+            stream2
+                .ToStreamEventObservable()
+                .Where(e => e.IsData)
+                .ForEach(e => Console.WriteLine(e));
 
             var sw = new Stopwatch();
             sw.Start();
@@ -64,18 +85,30 @@ namespace bench
                 .Cache();
         }
 
-        public static Func<IStreamable<Empty, TaxiFare>> TaxiFareDataFn(long s)
+        public static Func<Tuple<IStreamable<Empty, TaxiRide>, IStreamable<Empty, TaxiFare>>> TaxiDataFn(long s)
         {
-            return () => new TaxiFareData(s)
-                .ToStreamable()
-                .Cache();
-        }
+            return () => {
+                var taxi_ride_data = new TaxiRideData();
+                var taxi_fare_data = new TaxiFareData();
 
-        public static Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long s)
-        {
-            return () => new TaxiRideData(s)
-                .ToStreamable()
-                .Cache();
+                MessageParser<stream_event> parser = new MessageParser<stream_event>(() => new stream_event());
+                for (int i = 0; i < s; i++)
+                {
+                    stream_event s_event = parser.ParseDelimitedFrom(Console.OpenStandardInput());
+                    if (s_event.PayloadCase == stream_event.PayloadOneofCase.TaxiTrip) {
+                        taxi_ride_data.LoadDataPoint(s_event);
+                    } else if (s_event.PayloadCase == stream_event.PayloadOneofCase.TaxiFare) {
+                        taxi_fare_data.LoadDataPoint(s_event);
+                    } else {
+                        Debug.Assert(false);
+                    }
+                }
+
+                return Tuple.Create(
+                    (IStreamable<Empty, TaxiRide>) taxi_ride_data.ToStreamable().Cache(),
+                    (IStreamable<Empty, TaxiFare>) taxi_fare_data.ToStreamable().Cache()
+                );
+            };
         }
 
         public static Func<IStreamable<Empty, float>> VibrationDataFn(long s)

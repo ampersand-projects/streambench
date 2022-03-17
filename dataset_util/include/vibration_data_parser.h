@@ -8,22 +8,12 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/filesystem.hpp>
 
-#include <vibration.pb.h>
-
 #include <data_parser.h>
 
 using namespace std;
 using namespace boost::filesystem;
 
-ostream& operator<< (ostream& out, stream::vibration const& vibration)
-{
-    out << "vibration[" << vibration.st() << ", " << vibration.et() << "]: ";
-    out << "channel_1: " << vibration.payload().channel_1() << ", ";
-    out << "channel_2: " << vibration.payload().channel_2();
-    return out;
-}
-
-class vibration_data_parser : public data_parser<stream::vibration>
+class vibration_data_parser : public data_parser
 {
 private:
     enum VIBRATION_DATA_INDEX {
@@ -48,22 +38,21 @@ protected:
     };
 
 public:
-    vibration_data_parser(string &dataset_dir, int64_t size) :
-        data_parser<stream::vibration>(size),
+    vibration_data_parser(string &dataset_dir) :
         dataset_dir(dataset_dir)
     {}
     ~vibration_data_parser(){}
 
-    void gen_data(vector<string> &row, stream::vibration *vibration) override {
+    void gen_data(vector<string> &row, stream::stream_event *event, int flag) override {
         int64_t st = stoi(row[TIMESTAMP]);
         int64_t et = st + 1;
         float channel_1 = this->stof_err_handle(row[CHANNEL_1]);
         float channel_2 = this->stof_err_handle(row[CHANNEL_2]);
 
-        vibration->set_st(st);
-        vibration->set_et(et);
-        vibration->mutable_payload()->set_channel_1(channel_1);
-        vibration->mutable_payload()->set_channel_2(channel_2);
+        event->set_st(st);
+        event->set_et(et);
+        event->mutable_vibration()->set_channel_1(channel_1);
+        event->mutable_vibration()->set_channel_2(channel_2);
     }
 
     bool parse() override {
@@ -92,10 +81,8 @@ public:
 
                 cerr << "Parsing " << data_file << endl;
                 std::fstream data_csv_file(data_file.string());
-                if(!this->parse_csv_file(data_csv_file)) {
-                    break;
-                }
-
+                this->parse_csv_file(data_csv_file);
+            
                 data_csv_file.close();
             }
         }
