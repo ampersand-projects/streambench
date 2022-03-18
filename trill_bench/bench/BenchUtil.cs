@@ -14,11 +14,6 @@ namespace bench
         {
             var stream = data();
 
-            stream
-                .ToStreamEventObservable()
-                .Where(e => e.IsData)
-                .ForEach(e => Console.WriteLine(e));
-
             var sw = new Stopwatch();
             sw.Start();
             var s_obs = transform(stream);
@@ -56,16 +51,6 @@ namespace bench
             var result = data();
             var stream = result.Item1;
             var stream2 = result.Item2;
-
-            stream
-                .ToStreamEventObservable()
-                .Where(e => e.IsData)
-                .ForEach(e => Console.WriteLine(e));
-
-            stream2
-                .ToStreamEventObservable()
-                .Where(e => e.IsData)
-                .ForEach(e => Console.WriteLine(e));
 
             var sw = new Stopwatch();
             sw.Start();

@@ -2,9 +2,6 @@
 #include <iomanip>
 #include <sys/resource.h>
 
-#include <data_loader.h>
-#include <data_printer.h>
-
 #include "tilt_select.h"
 #include "tilt_where.h"
 #include "tilt_aggregate.h"
@@ -25,8 +22,6 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
     const rlim_t kStackSize = 2 * 1024 * 1024 * 1024;   // min stack size = 2 GB
     struct rlimit rl;
     int result;
@@ -47,15 +42,6 @@ int main(int argc, char** argv)
     int64_t period = 1;
 
     double time = 0;
-
-    data_loader loader;
-    for (int i = 0; i < size; i++) {
-        stream::stream_event event;
-        if (!loader.load_data(event)) {
-            break;
-        }
-        cout << event << endl;
-    }
 
     if (testcase == "select") {
         SelectBench bench(period, size);
@@ -127,6 +113,5 @@ int main(int argc, char** argv)
     cout << "Testcase: " << testcase <<", Size: " << size
         << ", Time: " << setprecision(3) << time / 1000000 << endl;
 
-    google::protobuf::ShutdownProtobufLibrary();
     return 0;
 }
