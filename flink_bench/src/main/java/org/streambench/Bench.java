@@ -1,6 +1,7 @@
 package org.streambench;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -9,6 +10,7 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.util.*;
@@ -24,10 +26,24 @@ public class Bench {
             this.end_time = end_time;
             this.payload = payload;
         }
-        
+
         public String toString() {
             return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " payload: "
                     + String.valueOf(payload);
+        }
+    }
+
+    public static class AlgoTradeResult {
+        public long time;
+        public Boolean buy;
+
+        public AlgoTradeResult(long time, Boolean buy) {
+            this.time = time;
+            this.buy = buy;
+        }
+
+        public String toString() {
+            return "time: " + String.valueOf(time) + " buy: " + String.valueOf((buy));
         }
     }
 
@@ -81,6 +97,37 @@ public class Bench {
         }
     }
 
+    public static class smaAggregation implements AggregateFunction<Data, Tuple2<Data, Long>, Data> {
+        @Override
+        public Tuple2<Data, Long> createAccumulator() {
+            return new Tuple2<>(new Data((long) Integer.MAX_VALUE, 0, 0), 0L);
+        }
+
+        @Override
+        public Tuple2<Data, Long> add(Data value, Tuple2<Data, Long> accumulator) {
+            accumulator.f0.start_time = Math.min(accumulator.f0.start_time, value.start_time);
+            accumulator.f0.end_time = Math.max(accumulator.f0.end_time, value.end_time);
+            accumulator.f0.payload += value.payload;
+            accumulator.f1 += 1;
+            return accumulator;
+        }
+
+        @Override
+        public Data getResult(Tuple2<Data, Long> accumulator) {
+            return new Data(accumulator.f0.start_time, accumulator.f0.end_time,
+                    accumulator.f0.payload / accumulator.f1);
+        }
+
+        @Override
+        public Tuple2<Data, Long> merge(Tuple2<Data, Long> a, Tuple2<Data, Long> b) {
+            a.f0.start_time = Math.min(a.f0.start_time, b.f0.start_time);
+            a.f0.end_time = Math.max(a.f0.end_time, b.f0.end_time);
+            a.f0.payload += b.f0.payload;
+            a.f1 += b.f1;
+            return a;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         String benchmark = (args.length > 0) ? args[0] : "select";
         long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
@@ -122,7 +169,7 @@ public class Bench {
                 DataStream<Data> innerjoin = stream1.join(stream2)
                         .where(new ConstKeySelector())
                         .equalTo((new ConstKeySelector()))
-                        .window(TumblingEventTimeWindows.of(Time.milliseconds(1)))
+                        .window(TumblingEventTimeWindows.of(Time.milliseconds(period)))
                         .apply(new JoinFunction<Data, Data, Data>() {
                             @Override
                             public Data join(Data first, Data second) {
@@ -130,7 +177,37 @@ public class Bench {
                             }
                         });
                 break;
-                
+            case "algotrade":
+                long shortwin = 10, longwin = 20;
+                DataStream<Data> smaShort = stream1
+                        .windowAll(SlidingEventTimeWindows.of(Time.milliseconds(shortwin * period),
+                                Time.milliseconds(period)))
+                        .aggregate(new smaAggregation());
+
+                DataStream<Data> smaLong = stream1
+                        .windowAll(SlidingEventTimeWindows.of(Time.milliseconds(longwin * period),
+                                Time.milliseconds(period)))
+                        .aggregate(new smaAggregation());
+
+                DataStream<AlgoTradeResult> buy = smaShort.join(smaLong).where(new KeySelector<Bench.Data, Long>() {
+                    @Override
+                    public Long getKey(Data left) {
+                        return left.end_time;
+                    }
+                }).equalTo(new KeySelector<Bench.Data, Long>() {
+                    @Override
+                    public Long getKey(Data right) {
+                        return right.end_time;
+                    }
+                }).window(TumblingEventTimeWindows.of(Time.milliseconds(period)))
+                        .apply(new JoinFunction<Data, Data, AlgoTradeResult>() {
+                            @Override
+                            public AlgoTradeResult join(Data first, Data second) {
+                                return new AlgoTradeResult(first.end_time, first.payload > second.payload);
+                            }
+                        });
+                break;
+
             default:
                 System.out.println("Unknown benchmark type");
         }
