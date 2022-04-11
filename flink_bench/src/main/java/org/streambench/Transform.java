@@ -6,6 +6,8 @@ import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindow
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.streambench.Bench.Data;
 import org.streambench.Utility.SmaAggregation;
+import org.streambench.Utility.StdAggregation;
+import org.streambench.Bench.ConstKeySelector;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 
@@ -56,5 +58,59 @@ public class Transform {
                     }
                 });
         return buy;
+    }
+
+    public static class ZScore {
+        public long start_time;
+        public long end_time;
+        public float avg;
+        public float std;
+
+        public ZScore(long start_time, long end_time, float avg, float std) {
+            this.start_time = start_time;
+            this.end_time = end_time;
+            this.avg = avg;
+            this.std = std;
+        }
+
+        public String toString() {
+            return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " avg: "
+                    + String.valueOf(avg) + " std: " + String.valueOf(std);
+        }
+    }
+
+    static DataStream<Data> Normalization(DataStream<Data> source, long win_size) {
+        DataStream<Data> avg = source.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
+                .aggregate(new SmaAggregation());
+        DataStream<Data> std = source.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
+                .aggregate(new StdAggregation());
+
+        DataStream<ZScore> stats = avg.join(std)
+                .where(new ConstKeySelector())
+                .equalTo(new ConstKeySelector())
+                .window(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
+                .apply(new JoinFunction<Data, Data, ZScore>() {
+                    @Override
+                    public ZScore join(Data left, Data right) {
+                        return new ZScore(left.start_time, left.end_time, left.payload, right.payload);
+                    }
+                });
+
+        DataStream<Data> results = source.join(stats)
+                .where(new ConstKeySelector())
+                .equalTo(new KeySelector<Transform.ZScore, Integer>() {
+                    @Override
+                    public Integer getKey(ZScore value) {
+                        return 0;
+                    }
+                })
+                .window(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
+                .apply(new JoinFunction<Data, ZScore, Data>() {
+                    @Override
+                    public Data join(Data left, ZScore right) {
+                        return new Data(left.start_time, left.end_time, (left.payload - right.avg) / right.std);
+                    }
+                });
+        return results;
     }
 }

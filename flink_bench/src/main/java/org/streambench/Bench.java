@@ -32,7 +32,7 @@ public class Bench {
         }
     }
 
-    private static class ConstKeySelector implements KeySelector<Data, Integer> {
+    public static class ConstKeySelector implements KeySelector<Data, Integer> {
         @Override
         public Integer getKey(Data value) {
             return 0;
@@ -106,6 +106,10 @@ public class Bench {
             case "algotrade":
                 long shortwin = 10000, longwin = 20000;
                 DataStream<AlgoTradeResult> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
+                break;
+            case "normalize":
+                long win_size = 10000;
+                DataStream<Data> result = Transform.Normalization(stream1, win_size);
                 break;
             default:
                 System.out.println("Unknown benchmark type");
