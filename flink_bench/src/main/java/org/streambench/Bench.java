@@ -104,7 +104,7 @@ public class Bench {
                         });
                 break;
             case "algotrade":
-                long shortwin = 10000, longwin = 20000;
+                long shortwin = 20000, longwin = 50000;
                 DataStream<AlgoTradeResult> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
                 break;
             case "normalize":
