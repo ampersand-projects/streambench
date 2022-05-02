@@ -6,8 +6,8 @@ import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindow
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.streambench.Bench.Data;
 import org.streambench.Utility.SmaAggregation;
-import org.streambench.Utility.StdAggregation;
-import org.streambench.Bench.ConstKeySelector;
+import org.streambench.Utility.ZscoreAggregation;
+import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 
@@ -80,24 +80,11 @@ public class Transform {
     }
 
     static DataStream<Data> Normalization(DataStream<Data> source, long win_size) {
-        DataStream<Data> avg = source.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
-                .aggregate(new SmaAggregation());
-        DataStream<Data> std = source.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
-                .aggregate(new StdAggregation());
-
-        DataStream<ZScore> stats = avg.join(std)
-                .where(new ConstKeySelector())
-                .equalTo(new ConstKeySelector())
-                .window(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
-                .apply(new JoinFunction<Data, Data, ZScore>() {
-                    @Override
-                    public ZScore join(Data left, Data right) {
-                        return new ZScore(left.start_time, left.end_time, left.payload, right.payload);
-                    }
-                });
+        DataStream<ZScore> stats = source.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
+                .aggregate(new ZscoreAggregation());
 
         DataStream<Data> results = source.join(stats)
-                .where(new ConstKeySelector())
+                .where(new ConstKeySelector<Data>())
                 .equalTo(new KeySelector<Transform.ZScore, Integer>() {
                     @Override
                     public Integer getKey(ZScore value) {

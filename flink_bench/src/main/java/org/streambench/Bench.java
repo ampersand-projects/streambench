@@ -5,12 +5,12 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.streambench.Transform.AlgoTradeResult;
 import org.streambench.Utility.SumAggregation;
+import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
-import org.apache.flink.api.java.functions.KeySelector;
 
 import java.util.*;
 
@@ -29,13 +29,6 @@ public class Bench {
         public String toString() {
             return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " payload: "
                     + String.valueOf(payload);
-        }
-    }
-
-    public static class ConstKeySelector implements KeySelector<Data, Integer> {
-        @Override
-        public Integer getKey(Data value) {
-            return 0;
         }
     }
 
@@ -93,8 +86,8 @@ public class Bench {
             case "innerjoin":
                 DataStream<Data> stream2 = streamGen(size, period, env);
                 DataStream<Data> innerjoin = stream1.join(stream2)
-                        .where(new ConstKeySelector())
-                        .equalTo((new ConstKeySelector()))
+                        .where(new ConstKeySelector<Data>())
+                        .equalTo((new ConstKeySelector<Data>()))
                         .window(TumblingEventTimeWindows.of(Time.milliseconds(period)))
                         .apply(new JoinFunction<Data, Data, Data>() {
                             @Override
