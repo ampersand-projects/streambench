@@ -24,7 +24,7 @@ namespace bench
 
         public void LoadData()
         {
-            for (int i = 0; i < size; i++)
+            for (long i = 0; i < size; i++)
             {
                 this.LoadDataPoint();
             }
@@ -81,8 +81,10 @@ namespace bench
 
         public VibrationObs(long size) : base(size)
         {
+            Console.WriteLine("Start loading vibration data points ...");
             this.parser = new MessageParser<stream_event>(() => new stream_event());
             LoadData();
+            Console.WriteLine("Finished loading {0} vibration data points", size);
         }
     }
 }

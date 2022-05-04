@@ -51,6 +51,7 @@ ostream& operator<< (ostream& out, stream::taxi_fare const& fare)
 
 ostream& operator<< (ostream& out, stream::stream_event const& event)
 {
+    out << "(Partition: " << event.part_key() << ") ";
     out << "Event: [" << event.st() << ", " << event.et() << "]: ";
     if (event.has_taxi_trip()) {
         out << event.taxi_trip();

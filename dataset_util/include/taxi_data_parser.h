@@ -1,18 +1,19 @@
 #ifndef DATASET_UTIL_TAXI_DATA_PARSER_H_
 #define DATASET_UTIL_TAXI_DATA_PARSER_H_
 
-#include <string>
-#include <fstream>
+#include <assert.h>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/filesystem.hpp>
 
-#include <data_parser.h>
+#include <util.h>
+
+#include <csv_parser.h>
 
 using namespace std;
 using namespace boost::filesystem;
 
-class taxi_data_parser : public data_parser
+class taxi_data_parser : public csv_parser
 {
 private:
     enum TAXI_FARE_DATA_INDEX {
@@ -44,15 +45,33 @@ private:
         TAXI_TRIP_DROPOFF_LONGITUDE,
         TAXI_TRIP_DROPOFF_LATITUDE
     };
-protected:
+
+    const vector<string> foil_folders = {
+        "FOIL2010", "FOIL2011",
+        "FOIL2012", "FOIL2013"
+    };
     vector<string> file_name_prefixes;
     string &dataset_dir;
     boost::posix_time::ptime start_time;
-    const vector<string> foil_folders = {"FOIL2010", "FOIL2011", "FOIL2012", "FOIL2013"};
 
-    void gen_taxi_trip(vector<string> &row, stream::stream_event *event) {
-        int64_t st = this->parse_datetime_to_seconds(row[TAXI_TRIP_PICKUP_DATETIME], start_time);
-        int64_t et = this->parse_datetime_to_seconds(row[TAXI_TRIP_DROPOFF_DATETIME], start_time);
+    int taxi_trip_part_key;
+    int taxi_fare_part_key;
+    int part_key;
+
+    void decode(csv_row &row, stream::stream_event *event) override
+    {
+        if (part_key == taxi_trip_part_key) {
+            decode_taxi_trip(row, event);
+        } else if (part_key == taxi_fare_part_key) {
+            decode_taxi_fare(row, event);
+        } else {
+            assert(false && "Partition key is unrecgonized");
+        }
+    }
+
+    void decode_taxi_trip(csv_row &row, stream::stream_event *event) {
+        int64_t st = parse_datetime_to_seconds(row[TAXI_TRIP_PICKUP_DATETIME], start_time);
+        int64_t et = parse_datetime_to_seconds(row[TAXI_TRIP_DROPOFF_DATETIME], start_time);
         int32_t medallion = stoi(row[TAXI_TRIP_MEDALLION]);
         int32_t hack_license = stoi(row[TAXI_TRIP_HACK_LICENSE]);
         string vendor_id = row[TAXI_TRIP_VENDOR_ID];
@@ -60,14 +79,15 @@ protected:
         bool store_and_fwd_flag = false;
         int32_t passenger_count = stoi(row[TAXI_TRIP_PASSENGER_COUNT]);
         int32_t trip_time_in_secs = stoi(row[TAXI_TRIP_TRIP_TIME_IN_SECS]);
-        float trip_distance = this->stof_err_handle(row[TAXI_TRIP_TRIP_DISTANCE]);
-        float pickup_longitude = this->stof_err_handle(row[TAXI_TRIP_PICKUP_LONGITUDE]);
-        float pickup_latitude = this->stof_err_handle(row[TAXI_TRIP_PICKUP_LATITUDE]);
-        float dropoff_longitude = this->stof_err_handle(row[TAXI_TRIP_DROPOFF_LONGITUDE]);
-        float dropoff_latitude = this->stof_err_handle(row[TAXI_TRIP_DROPOFF_LATITUDE]);
+        float trip_distance = stof_err_handle(row[TAXI_TRIP_TRIP_DISTANCE]);
+        float pickup_longitude = stof_err_handle(row[TAXI_TRIP_PICKUP_LONGITUDE]);
+        float pickup_latitude = stof_err_handle(row[TAXI_TRIP_PICKUP_LATITUDE]);
+        float dropoff_longitude = stof_err_handle(row[TAXI_TRIP_DROPOFF_LONGITUDE]);
+        float dropoff_latitude = stof_err_handle(row[TAXI_TRIP_DROPOFF_LATITUDE]);
 
         event->set_st(st);
         event->set_et(et);
+        event->set_part_key(part_key);
         event->mutable_taxi_trip()->set_medallion(medallion);
         event->mutable_taxi_trip()->set_hack_license(hack_license);
         event->mutable_taxi_trip()->set_vendor_id(vendor_id);
@@ -82,22 +102,23 @@ protected:
         event->mutable_taxi_trip()->set_dropoff_latitude(dropoff_latitude);
     }
 
-    void gen_taxi_fare(vector<string> &row, stream::stream_event *event) {
-        int64_t st = this->parse_datetime_to_seconds(row[TAXI_FARE_PICKUP_DATETIME], start_time);
+    void decode_taxi_fare(csv_row &row, stream::stream_event *event) {
+        int64_t st = parse_datetime_to_seconds(row[TAXI_FARE_PICKUP_DATETIME], start_time);
         int64_t et = st + 1;
         int32_t medallion = stoi(row[TAXI_FARE_MEDALLION]);
         int32_t hack_license = stoi(row[TAXI_FARE_HACK_LICENSE]);
         string vendor_id = row[TAXI_FARE_VENDOR_ID];
         string payment_type = row[TAXI_FARE_PAYMENT_TYPE];
-        float fare_amount = this->stof_err_handle(row[TAXI_FARE_FARE_AMOUNT]);
-        float surcharge = this->stof_err_handle(row[TAXI_FARE_SURCHARGE]);
-        float mta_tax = this->stof_err_handle(row[TAXI_FARE_MTA_TAX]);
-        float tip_amount = this->stof_err_handle(row[TAXI_FARE_TIP_AMOUNT]);
-        float tolls_amount = this->stof_err_handle(row[TAXI_FARE_TOLLS_AMOUNT]);
-        float total_amount = this->stof_err_handle(row[TAXI_FARE_TOTAL_AMOUNT]);
+        float fare_amount = stof_err_handle(row[TAXI_FARE_FARE_AMOUNT]);
+        float surcharge = stof_err_handle(row[TAXI_FARE_SURCHARGE]);
+        float mta_tax = stof_err_handle(row[TAXI_FARE_MTA_TAX]);
+        float tip_amount = stof_err_handle(row[TAXI_FARE_TIP_AMOUNT]);
+        float tolls_amount = stof_err_handle(row[TAXI_FARE_TOLLS_AMOUNT]);
+        float total_amount = stof_err_handle(row[TAXI_FARE_TOTAL_AMOUNT]);
 
         event->set_st(st);
         event->set_et(et);
+        event->set_part_key(part_key);
         event->mutable_taxi_fare()->set_medallion(medallion);
         event->mutable_taxi_fare()->set_hack_license(hack_license);
         event->mutable_taxi_fare()->set_vendor_id(vendor_id);
@@ -111,10 +132,20 @@ protected:
     }
 
 public:
-    taxi_data_parser(string &dataset_name, string &dataset_dir) :
+    taxi_data_parser(
+        string &dataset_name,
+        string &dataset_dir, 
+        int taxi_trip_part_key = 0,
+        int taxi_fare_part_key = 1
+    ) :
         dataset_dir(dataset_dir),
-        start_time(boost::gregorian::date(1970, 1, 1))
+        start_time(boost::gregorian::date(1970, 1, 1)),
+        taxi_trip_part_key(taxi_trip_part_key),
+        taxi_fare_part_key(taxi_fare_part_key)
     {
+        assert(taxi_trip_part_key != taxi_fare_part_key &&
+            "Partition key for trip and fare data cannot be the same");
+
         if (dataset_name == "taxi_trip") {
             file_name_prefixes.push_back("trip_data_");
         } else if (dataset_name == "taxi_fare") {
@@ -150,11 +181,16 @@ public:
                     } else {
                         continue;
                     }
-                    cerr << "Parsing " << trip_data_file << endl;
-                    std::fstream trip_csv_file(trip_data_file.string());
-                    this->parse_csv_file(trip_csv_file, file_name_prefix == "trip_data_" ? 0 : 1);
 
-                    trip_csv_file.close();
+                    if (file_name_prefix == "trip_data_") {
+                        part_key = taxi_trip_part_key;
+                    } else if (file_name_prefix == "trip_fare_") {
+                        part_key = taxi_fare_part_key;
+                    } else {
+                        assert(false);
+                    }
+                    
+                    this->parse_csv_file(trip_data_file.string());
                 }
                 i++;
                 if (!file_exists) {
@@ -164,14 +200,6 @@ public:
         }
 
         return true;
-    }
-
-    void gen_data(vector<string> &row, stream::stream_event *event, int flag) override {
-        if (flag == 0) {
-            gen_taxi_trip(row, event);
-        } else {
-            gen_taxi_fare(row, event);
-        }
     }
 };
 

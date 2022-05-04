@@ -75,19 +75,26 @@ namespace bench
             return () => {
                 var taxi_ride_data = new TaxiRideData();
                 var taxi_fare_data = new TaxiFareData();
+                long cnt_trips = 0;
+                long cnt_fares = 0;
+
+                Console.WriteLine("Start loading taxi trips and taxi fares ...");
 
                 MessageParser<stream_event> parser = new MessageParser<stream_event>(() => new stream_event());
-                for (int i = 0; i < s; i++)
+                for (long i = 0; i < s; i++)
                 {
                     stream_event s_event = parser.ParseDelimitedFrom(Console.OpenStandardInput());
                     if (s_event.PayloadCase == stream_event.PayloadOneofCase.TaxiTrip) {
                         taxi_ride_data.LoadDataPoint(s_event);
+                        cnt_trips++;
                     } else if (s_event.PayloadCase == stream_event.PayloadOneofCase.TaxiFare) {
                         taxi_fare_data.LoadDataPoint(s_event);
+                        cnt_fares++;
                     } else {
                         Debug.Assert(false);
                     }
                 }
+                Console.WriteLine("Finished loading {0} taxi trips and {1} taxi fares", cnt_trips, cnt_fares);
 
                 return Tuple.Create(
                     (IStreamable<Empty, TaxiRide>) taxi_ride_data.ToStreamable().Cache(),
