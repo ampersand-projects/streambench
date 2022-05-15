@@ -23,15 +23,12 @@ public:
             config.records_total,
             config.records_per_interval
         );
-
-        Pipeline* p = Pipeline::create(NULL);
-        PCollection *bound_output = dynamic_cast<PCollection *>(p->apply1(&bound));
-        bound_output->_name = "src_out";
-
         TemporalWinMapper<temporal_event, long, BundleT> mapper("winmapper", seconds(1), ptime(boost::gregorian::date(2020, Jan, 1)));
         WinSum_addlong<long, long> agg ("agg", 1);
         RecordBundleSink<long> sink("sink");
 
+        Pipeline* p = Pipeline::create(NULL);
+        source_transform(bound);
         connect_transform(bound, mapper);
         connect_transform(mapper, agg);
         connect_transform(agg, sink);

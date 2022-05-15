@@ -58,6 +58,7 @@ SET(SRC_STREAMBENCH
     ${STREAMBENCH_SOURCE_DIR}/Mapper/FilterMapper.cpp
     ${STREAMBENCH_SOURCE_DIR}/Mapper/ProjectMapper.cpp
     ${STREAMBENCH_SOURCE_DIR}/Mapper/TemporalWinMapper.cpp
+    ${STREAMBENCH_SOURCE_DIR}/Mapper/TemporalKVMapper.cpp
     ${STREAMBENCH_SOURCE_DIR}/Source/BoundedInMem.cpp
 )
 

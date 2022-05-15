@@ -6,6 +6,7 @@
 #include "sb_select.h"
 #include "sb_where.h"
 #include "sb_aggregate.h"
+#include "sb_join.h"
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +45,9 @@ int main(int argc, char *argv[])
 		time = benchmark.run_benchmark();
     } else if (testcase == "aggregate") {
         AggregateBench benchmark(config, 1);
+		time = benchmark.run_benchmark();
+    } else if (testcase == "join") {
+        JoinBench benchmark(config, 1);
 		time = benchmark.run_benchmark();
     } else {
         throw runtime_error("Invalid testcase");

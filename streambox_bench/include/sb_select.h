@@ -23,14 +23,11 @@ public:
             config.records_total,
             config.records_per_interval
         );
-
-        Pipeline* p = Pipeline::create(NULL);
-        PCollection *bound_output = dynamic_cast<PCollection *>(p->apply1(&bound));
-        bound_output->_name = "src_out";
-
         ProjectMapper<temporal_event, temporal_event, BundleT> mapper("[project-mapper]", projector);
         RecordBundleSink<temporal_event> sink("sink");
 
+        Pipeline* p = Pipeline::create(NULL);
+        source_transform(bound);
         connect_transform(bound, mapper);
         connect_transform(mapper, sink);
         
