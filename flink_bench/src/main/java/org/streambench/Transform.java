@@ -85,12 +85,7 @@ public class Transform {
 
         DataStream<Data> results = source.join(stats)
                 .where(new ConstKeySelector<Data>())
-                .equalTo(new KeySelector<Transform.ZScore, Integer>() {
-                    @Override
-                    public Integer getKey(ZScore value) {
-                        return 0;
-                    }
-                })
+                .equalTo(new ConstKeySelector<ZScore>())
                 .window(TumblingEventTimeWindows.of(Time.milliseconds(win_size)))
                 .apply(new JoinFunction<Data, ZScore, Data>() {
                     @Override
