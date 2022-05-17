@@ -3,7 +3,7 @@ package org.streambench;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.streambench.Transform.AlgoTradeResult;
+import org.streambench.Transform.BoolStream;
 import org.streambench.Utility.SumAggregation;
 import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -55,6 +55,7 @@ public class Bench {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         DataStream<Data> stream1 = streamGen(size, period, env);
+        long win_size;
 
         switch (benchmark) {
             case "select":
@@ -97,12 +98,16 @@ public class Bench {
                         });
                 break;
             case "algotrade":
-                long shortwin = 20000, longwin = 50000;
-                DataStream<AlgoTradeResult> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
+                long shortwin = 20, longwin = 50;
+                DataStream<BoolStream> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
                 break;
             case "normalize":
-                long win_size = 10000;
+                win_size = 10;
                 DataStream<Data> result = Transform.Normalization(stream1, win_size);
+                break;
+            case "largeqty":
+                win_size = 10;
+                DataStream<BoolStream> largeQty = Transform.LargeQty(stream1, win_size, period);
                 break;
             default:
                 System.out.println("Unknown benchmark type");
