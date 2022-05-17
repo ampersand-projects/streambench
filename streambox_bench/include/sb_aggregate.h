@@ -6,8 +6,8 @@
 #include <core/Pipeline.h>
 #include <core/EvaluationBundleContext.h>
 #include "Sink/Sink.h"
-#include "WinSum/WinSum_addlong.h"
 
+#include "streambench/WinSum/WinSum_addfloat.h"
 #include "streambench/Source/BoundedInMem.h"
 #include "streambench/Mapper/TemporalWinMapper.h"
 
@@ -23,9 +23,9 @@ public:
             config.records_total,
             config.records_per_interval
         );
-        TemporalWinMapper<temporal_event, long, BundleT> mapper("winmapper", seconds(1), ptime(boost::gregorian::date(2020, Jan, 1)));
-        WinSum_addlong<long, long> agg ("agg", 1);
-        RecordBundleSink<long> sink("sink");
+        TemporalWinMapper<temporal_event, float, BundleT> mapper("winmapper", seconds(1));
+        WinSum_addfloat<float, float> agg ("agg", 1);
+        RecordBundleSink<float> sink("sink");
 
         Pipeline* p = Pipeline::create(NULL);
         source_transform(bound);

@@ -12,7 +12,7 @@ class TemporalKVMapper : public Mapper<InputT> {
 	using OutputBundleT = BundleT<OutputT>;
 
 private:
-	ptime base_ts = ptime(boost::gregorian::date(2020, Jan, 1));
+	ptime base_ts = ptime(boost::gregorian::date(1970, Jan, 1));
 
 public:
   	TemporalKVMapper(string name) :

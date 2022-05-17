@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <numa.h>
+#include <cstdlib>
 
 #include <boost/progress.hpp> /* progress bar */
 
@@ -28,7 +29,7 @@ public:
 	const unsigned long records_total;
 	const unsigned long records_per_interval;
 
-  	ptime base_ts = ptime(boost::gregorian::date(2020, Jan, 1));
+  	ptime base_ts = ptime(boost::gregorian::date(1970, Jan, 1));
 
 public:
   	BoundedInMem (string name, int64_t dur,
@@ -57,8 +58,9 @@ public:
   	}
 
 	void fill_record_buffer(Record<temporal_event> *record_buffer, unsigned int j) {
+		double range = 100;
 		record_buffer[j].data.dur = dur;
-		record_buffer[j].data.payload = static_cast<float> (j) * (j % 2 ? 1.0 : -1.0);;
+		record_buffer[j].data.payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
 	}
 
 	void fill_record_buffer(Record<long> *record_buffer, unsigned int j) {
