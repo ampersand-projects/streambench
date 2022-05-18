@@ -11,3 +11,7 @@
 [submodule "lightsaber_bench/LightSaber"]
 	path = lightsaber_bench/LightSaber
 	url = https://github.com/wzhao18/LightSaber.git
+[submodule "grizzly_bench/grizzly-prototype"]
+	path = grizzly_bench/grizzly-prototype
+	url = https://github.com/ampersand-projects/grizzly-prototype.git
+	branch = bench
