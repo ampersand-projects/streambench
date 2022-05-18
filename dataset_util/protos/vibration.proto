@@ -1,0 +1,11 @@
+syntax = "proto3";
+package stream;
+
+option java_multiple_files = true;
+option java_package = "com.stream.vibration.protos";
+option java_outer_classname = "VibrationProtos";
+
+message vibration {
+    float channel_1 = 1;
+    float channel_2 = 2;
+}

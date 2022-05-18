@@ -1,0 +1,34 @@
+syntax = "proto3";
+package stream;
+
+option java_multiple_files = true;
+option java_package = "com.stream.taxi.protos";
+option java_outer_classname = "TaxiProtos";
+
+message taxi_trip {
+    int32 medallion = 1;
+    int32 hack_license = 2;
+    string vendor_id = 3;
+    int32 rate_code = 4;
+    bool store_and_fwd_flag = 5;
+    int32 passenger_count = 6;
+    int32 trip_time_in_secs = 7;
+    float trip_distance = 8;
+    float pickup_longitude = 9;
+    float pickup_latitude = 10;
+    float dropoff_longitude = 11;
+    float dropoff_latitude = 12;
+}
+
+message taxi_fare {
+    int32 medallion = 1;
+    int32 hack_license = 2;
+    string vendor_id = 3;
+    string payment_type = 4;
+    float fare_amount = 5;
+    float surcharge = 6;
+    float mta_tax = 7;
+    float tip_amount = 8;
+    float tolls_amount = 9;
+    float total_amount = 10;
+}
