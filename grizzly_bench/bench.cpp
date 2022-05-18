@@ -51,7 +51,7 @@ int main(int argc, const char *argv[])
     long win_size = 1000;
     time = Query::generate(config, schema, path)
         .window(TumblingProcessingTimeWindow(Time::seconds(win_size / period)))
-        .aggregate(CustomAvg())
+        .aggregate(CustomSum())
         .toOutputBuffer()
         .run();
   } else if (testcase == "alterdur") {
