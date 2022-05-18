@@ -3,13 +3,14 @@ package org.streambench;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.streambench.Transform.AlgoTradeResult;
+import org.streambench.Utility.SumAggregation;
+import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
-import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.util.*;
 
@@ -24,17 +25,10 @@ public class Bench {
             this.end_time = end_time;
             this.payload = payload;
         }
-        
+
         public String toString() {
             return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " payload: "
                     + String.valueOf(payload);
-        }
-    }
-
-    private static class ConstKeySelector implements KeySelector<Data, Integer> {
-        @Override
-        public Integer getKey(Data value) {
-            return 0;
         }
     }
 
@@ -51,34 +45,6 @@ public class Bench {
                 .withTimestampAssigner((event, timestamp) -> event.start_time);
         DataStream<Data> with_timestamp = stream.assignTimestampsAndWatermarks(wmStrategy);
         return with_timestamp;
-    }
-
-    public static class SumAggregation implements AggregateFunction<Data, Data, Data> {
-        @Override
-        public Data createAccumulator() {
-            return new Data((long) Integer.MAX_VALUE, 0, 0);
-        }
-
-        @Override
-        public Data add(Data value, Data accumulator) {
-            accumulator.start_time = Math.min(accumulator.start_time, value.start_time);
-            accumulator.end_time = Math.max(accumulator.end_time, value.end_time);
-            accumulator.payload += value.payload;
-            return accumulator;
-        }
-
-        @Override
-        public Data getResult(Data accumulator) {
-            return new Data(accumulator.start_time, accumulator.end_time, accumulator.payload);
-        }
-
-        @Override
-        public Data merge(Data a, Data b) {
-            a.start_time = Math.min(a.start_time, b.start_time);
-            a.end_time = Math.max(a.end_time, b.end_time);
-            a.payload += b.payload;
-            return a;
-        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -120,9 +86,9 @@ public class Bench {
             case "innerjoin":
                 DataStream<Data> stream2 = streamGen(size, period, env);
                 DataStream<Data> innerjoin = stream1.join(stream2)
-                        .where(new ConstKeySelector())
-                        .equalTo((new ConstKeySelector()))
-                        .window(TumblingEventTimeWindows.of(Time.milliseconds(1)))
+                        .where(new ConstKeySelector<Data>())
+                        .equalTo((new ConstKeySelector<Data>()))
+                        .window(TumblingEventTimeWindows.of(Time.milliseconds(period)))
                         .apply(new JoinFunction<Data, Data, Data>() {
                             @Override
                             public Data join(Data first, Data second) {
@@ -130,7 +96,14 @@ public class Bench {
                             }
                         });
                 break;
-                
+            case "algotrade":
+                long shortwin = 20000, longwin = 50000;
+                DataStream<AlgoTradeResult> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
+                break;
+            case "normalize":
+                long win_size = 10000;
+                DataStream<Data> result = Transform.Normalization(stream1, win_size);
+                break;
             default:
                 System.out.println("Unknown benchmark type");
         }
