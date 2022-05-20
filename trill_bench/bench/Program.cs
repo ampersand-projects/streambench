@@ -76,6 +76,13 @@ namespace bench
                     .ToStreamable()
                     .Cache();
             }
+
+            Func<IStreamable<Empty, Interaction>> YahooDataFn(long p, long s)
+            {
+                return () => new YahooObs(p, s)
+                    .ToStreamable()
+                    .Cache();
+            }
             
             switch (testcase)
             {
@@ -192,6 +199,12 @@ namespace bench
                     time = RunTest(DataFn(period, size), stream =>
                         stream
                             .Eg2(10, 20)
+                    );
+                    break;
+                case "yahoo":
+                    time = RunTest(YahooDataFn(period, size), stream =>
+                        stream
+                            .Yahoo(10, 1)
                     );
                     break;
                 default:
