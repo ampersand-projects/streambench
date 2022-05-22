@@ -22,7 +22,24 @@ uint64_t TemporalKVMapper<temporal_event, pair<long, long>, RecordBundle>::do_ma
 	return 1;
 }
 
+template<>
+uint64_t TemporalKVMapper<temporal_event, pair<long, temporal_event>, RecordBundle>::do_map
+	(Record<temporal_event> const &in, shared_ptr<RecordBundle<pair<long, temporal_event>>> output_bundle)
+{
+	auto diff = in.ts - base_ts;
+    long st = diff.total_milliseconds();
+	pair<long, temporal_event> kv_pair (st, in.data);
+	output_bundle->emplace_record(kv_pair, in.ts);
+
+	return 1;
+}
+
+
 /* -------instantiation concrete classes------- */
 template
 void TemporalKVMapper<temporal_event, pair<long, long>, RecordBundle>::ExecEvaluator(int nodeid,
+		EvaluationBundleContext *c, shared_ptr<BundleBase> bundle_ptr);
+
+template
+void TemporalKVMapper<temporal_event, pair<long, temporal_event>, RecordBundle>::ExecEvaluator(int nodeid,
 		EvaluationBundleContext *c, shared_ptr<BundleBase> bundle_ptr);
