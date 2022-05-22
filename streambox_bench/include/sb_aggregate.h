@@ -23,9 +23,9 @@ public:
             config.records_total,
             config.records_per_interval
         );
-        TemporalWinMapper<temporal_event, float, BundleT> mapper("winmapper", seconds(1));
-        WinSum_addfloat<float, float> agg ("agg", 1);
-        RecordBundleSink<float> sink("sink");
+        TemporalWinMapper<temporal_event, temporal_event, BundleT> mapper("winmapper", seconds(1));
+        WinSum_addfloat<temporal_event, temporal_event> agg ("agg", 1);
+        RecordBundleSink<temporal_event> sink("sink");
 
         Pipeline* p = Pipeline::create(NULL);
         source_transform(bound);

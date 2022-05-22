@@ -11,14 +11,18 @@ void TemporalWinMapper<InputT, OutputT, BundleT_>::ExecEvaluator(int nodeid,
 }
 
 template<>
-uint64_t TemporalWinMapper<temporal_event, float, RecordBundle>::do_map
-	(Record<temporal_event> const &in, shared_ptr<WindowsBundle<float>> output_bundle)
+uint64_t TemporalWinMapper<temporal_event, temporal_event, RecordBundle>::do_map
+	(Record<temporal_event> const &in, shared_ptr<WindowsBundle<temporal_event>> output_bundle)
 {
 	long offset = (in.ts - this->start).total_microseconds() \
         % (this->window_size).total_microseconds();
+	temporal_event event {
+		static_cast<uint64_t>(this->window_size.total_microseconds()),
+		in.data.payload 
+	};
     output_bundle->add_value(
 		Window(in.ts - microseconds(offset), this->window_size),
-		in.data.payload
+		event
 	);
 
     return 1;
@@ -26,5 +30,5 @@ uint64_t TemporalWinMapper<temporal_event, float, RecordBundle>::do_map
 
 /* -------instantiation concrete classes------- */
 template
-void TemporalWinMapper<temporal_event, float, RecordBundle>::ExecEvaluator(int nodeid,
+void TemporalWinMapper<temporal_event, temporal_event, RecordBundle>::ExecEvaluator(int nodeid,
 		EvaluationBundleContext *c, shared_ptr<BundleBase> bundle_ptr);
