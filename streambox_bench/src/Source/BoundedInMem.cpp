@@ -21,3 +21,9 @@ void BoundedInMem<long, RecordBundle>
 		::ExecEvaluator(int nodeid,
 			EvaluationBundleContext *c,
 			shared_ptr<BundleBase> bundle_ptr);
+
+template
+void BoundedInMem<yahoo_event, RecordBundle>
+		::ExecEvaluator(int nodeid,
+			EvaluationBundleContext *c,
+			shared_ptr<BundleBase> bundle_ptr);

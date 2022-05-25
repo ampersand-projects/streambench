@@ -61,6 +61,7 @@ SET(SRC_STREAMBENCH
     ${STREAMBENCH_SOURCE_DIR}/Mapper/TemporalKVMapper.cpp
     ${STREAMBENCH_SOURCE_DIR}/Source/BoundedInMem.cpp
     ${STREAMBENCH_SOURCE_DIR}/WinSum/WinSum_addfloat.cpp
+    ${STREAMBENCH_SOURCE_DIR}/WinSum/WinCount.cpp
 )
 
 SET(SOURCES

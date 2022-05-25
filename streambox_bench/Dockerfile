@@ -47,7 +47,7 @@ RUN cd /home && \
     cd build && \
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_FLAGS="-std=c++11" \
+        -DCMAKE_CXX_FLAGS="-std=c++14" \
         -G "CodeBlocks - Unix Makefiles" \
         .. && \
     make -j$(nproc)

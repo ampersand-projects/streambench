@@ -6,15 +6,15 @@
 
 #include "streambench/Mapper/FilterMapper.h"
 
-template <typename InputT, typename OutputT, template<class> class BundleT>
+template <typename T, template<class> class BundleT>
 	class FilterMapperEvaluator : 
 		public SingleInputTransformEvaluator<
-	   		FilterMapper<InputT, OutputT, BundleT>, BundleT<InputT>, BundleT<OutputT>
+	   		FilterMapper<T, BundleT>, BundleT<T>, BundleT<T>
 		>
 {
-	using InputBundleT = BundleT<InputT>;
-	using OutputBundleT = BundleT<OutputT>;
-	using TransformT = FilterMapper<InputT, OutputT, BundleT>;
+	using InputBundleT = BundleT<T>;
+	using OutputBundleT = BundleT<T>;
+	using TransformT = FilterMapper<T, BundleT>;
 
 public:
 	bool evaluateSingleInput (TransformT* trans, shared_ptr<InputBundleT> input_bundle,

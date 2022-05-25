@@ -67,6 +67,12 @@ public:
 		record_buffer[j].data = static_cast<long> (j);
 	}
 
+	void fill_record_buffer(Record<yahoo_event> *record_buffer, unsigned int j) {
+		record_buffer[j].data.user_id = static_cast<long>(rand() % 5 + 1);
+		record_buffer[j].data.campaign_id = static_cast<long>(rand() % 5 + 1);
+		record_buffer[j].data.event_type = static_cast<long>(rand() % 5 + 1);
+	}
+
 	virtual ptime RefreshWatermark(ptime wm) override {
 		return wm;
 	}

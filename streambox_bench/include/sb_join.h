@@ -27,7 +27,7 @@ public:
             mapper0("mapper0");
         TemporalKVMapper<temporal_event, pair<long, long>, BundleT>
             mapper1("mapper1");
-        Join<pair<long, long>, BundleT, BundleT> join("[join]", seconds(1));
+        Join<pair<long, long>, BundleT, BundleT> join("[join]", milliseconds(1));
         RecordBundleSink<pair<long, vector<long>>> sink1("sink1");
         RecordBundleSink<pair<long, vector<long>>> sink2("sink2");
 

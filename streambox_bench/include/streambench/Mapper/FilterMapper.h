@@ -6,21 +6,29 @@
 
 using namespace std;
 
-template <class InputT, class OutputT, template<class> class BundleT>
-class FilterMapper : public Mapper<InputT> {
-	using InputBundleT = BundleT<InputT>;
-	using OutputBundleT = BundleT<OutputT>;
+template <class T, template<class> class BundleT>
+class FilterMapper : public Mapper<T> {
+	using InputBundleT = BundleT<T>;
+	using OutputBundleT = BundleT<T>;
 
 private:
-	function<bool(temporal_event)> filter;
+	function<bool(T)> filter;
 
 public:
-  	FilterMapper(string name, function<bool(temporal_event)> filter) :
-	  	Mapper<InputT>(name),
+  	FilterMapper(string name, function<bool(T)> filter) :
+	  	Mapper<T>(name),
 		filter(filter)
 	{}
 
-  	uint64_t do_map(Record<InputT> const&, shared_ptr<OutputBundleT>);
+  	uint64_t do_map(Record<T> const& in, shared_ptr<OutputBundleT> output_bundle)
+	{
+		if (filter(in.data)) {
+			output_bundle->emplace_record(in.data, in.ts);
+		}
+
+		return 1;
+	}
+
   	void ExecEvaluator(int, EvaluationBundleContext*, shared_ptr<BundleBase> = nullptr) override;
 };
 

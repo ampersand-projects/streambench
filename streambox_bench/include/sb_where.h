@@ -23,7 +23,7 @@ public:
             config.records_total,
             config.records_per_interval
         );
-        FilterMapper<temporal_event, temporal_event, BundleT> mapper("filter-mapper]", filter);
+        FilterMapper<temporal_event, BundleT> mapper("filter-mapper]", filter);
         RecordBundleSink<temporal_event> sink("sink");
 
         Pipeline* p = Pipeline::create(NULL);
