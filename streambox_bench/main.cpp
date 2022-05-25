@@ -12,13 +12,14 @@
 int main(int argc, char *argv[])
 {
 	string testcase = (argc > 1) ? argv[1] : "select";
-    long unsigned int records_total = (argc > 2) ? atoi(argv[2]) : 10000000;
-	long unsigned int records_per_interval = (argc > 3) ? atoi(argv[3]) : 1000000;
+    long unsigned int num_cores = (argc > 2) ? atoi(argv[2]) : thread::hardware_concurrency() - 1;
+    long unsigned int records_total = (argc > 3) ? atoi(argv[3]) : 10000000;
+	long unsigned int records_per_interval = (argc > 4) ? atoi(argv[4]) : 1000000;
 
 	bench_pipeline_config config = {
 		.records_total = records_total,
 		.records_per_interval = records_per_interval,
-		.cores = thread::hardware_concurrency() - 1
+		.cores = num_cores
 	};
 
 	print_config();
@@ -58,8 +59,8 @@ int main(int argc, char *argv[])
     }
 
     cout << fixed;
-    cout << "Testcase: " << testcase <<", Size: " << records_total
-    	<< ", Time: " << setprecision(3) << time / 1000000 << endl;
+    cout << "Testcase: " << testcase <<", Size: " << records_total << ", Time: "
+        << setprecision(3) << time / 1000000 << " seconds" << endl;
 
     return 0;
 }
