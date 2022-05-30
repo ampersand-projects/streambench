@@ -51,14 +51,14 @@ namespace bench
 
             Func<IStreamable<Empty, float>> data = () =>
             {
-                return new TestObs(period, size)
+                return new SynDataObs(period, size)
                     .ToStreamable()
                     .Cache();
             };
 
             Func<IStreamable<Empty, float>> DataFn(long p, long s)
             {
-                return () => new TestObs(p, s)
+                return () => new SynDataObs(p, s)
                     .ToStreamable()
                     .Cache();
             }
@@ -142,7 +142,7 @@ namespace bench
                     long operiod = 5;
                     Func<IStreamable<Empty, float>> sig4 = () =>
                     {
-                        return new TestObs(iperiod, size)
+                        return new SynDataObs(iperiod, size)
                             .ToStreamable()
                             .Cache();
                     };
