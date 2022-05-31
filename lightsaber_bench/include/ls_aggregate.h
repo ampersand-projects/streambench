@@ -7,9 +7,11 @@
 #include "cql/operators/codeGeneration/OperatorKernel.h"
 
 
-class AggregateBench : public Benchmark {
+class AggregateBench : public Benchmark
+{
     long window_size;
-    void createApplication() override {
+    void createApplication() override
+    {
         SystemConf::getInstance().SLOTS = 256;
         SystemConf::getInstance().PARTIAL_WINDOWS = 64;
 
@@ -50,7 +52,9 @@ class AggregateBench : public Benchmark {
     }
 
     public:
-    AggregateBench(long window_size) : window_size(window_size){
+    AggregateBench(long window_size)
+        : window_size(window_size)
+    {
         createApplication();
     }
 };

@@ -9,7 +9,8 @@
 #include "cql/operators/codeGeneration/OperatorKernel.h"
 
 
-class WhereBench : public Benchmark {
+class WhereBench : public Benchmark
+{
     long window_size;
     void createApplication() override {
         auto predicate = new ComparisonPredicate(GREATER_OP, new ColumnReference(2, BasicType::Float), new FloatConstant(0));
@@ -39,7 +40,9 @@ class WhereBench : public Benchmark {
     }
 
     public:
-    WhereBench(long window_size) : window_size(window_size){
+    WhereBench(long window_size)
+        : window_size(window_size)
+    {
         createApplication();
     }
 };

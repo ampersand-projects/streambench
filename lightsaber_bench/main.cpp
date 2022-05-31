@@ -2,6 +2,7 @@
 #include <ls_where.h>
 #include <ls_aggregate.h>
 #include <ls_alterdur.h>
+#include <ls_yahoo.h>
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
@@ -21,6 +22,9 @@ int main(int argc, const char **argv) {
         benchmarkQuery = std::make_unique<AggregateBench>(1000);
     } else if (testcase == "alterdur") {
         benchmarkQuery = std::make_unique<AlterDurBench>(1, 60);
+    } else if (testcase == "yahoo") {
+        SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(YahooBench::YahooSchema);
+        benchmarkQuery = std::make_unique<YahooBench>(1000);
     } else {
         throw std::runtime_error("Invalid testcase");
     }
