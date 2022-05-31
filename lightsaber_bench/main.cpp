@@ -9,7 +9,7 @@ int main(int argc, const char **argv) {
     int64_t size = (argc > 2) ? atoi(argv[2]) : 10000000;
     int64_t runs = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t period = 1;
-    SystemConf::getInstance().BATCH_SIZE = 100000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 100,000
+    SystemConf::getInstance().BATCH_SIZE = 200000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 200,000
     SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(Benchmark::InputSchema);
 
     double time = 0;

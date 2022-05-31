@@ -181,5 +181,3 @@ RUN cd /root/lightsaber_bench && \
     cd build && \
     cmake .. -DCMAKE_BUILD_TYPE=Release && \
     make -j$(nproc) 2>/dev/null
-
-    
