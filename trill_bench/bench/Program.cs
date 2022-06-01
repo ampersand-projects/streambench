@@ -51,14 +51,14 @@ namespace bench
 
             Func<IStreamable<Empty, float>> data = () =>
             {
-                return new TestObs(period, size)
+                return new SynDataObs(period, size)
                     .ToStreamable()
                     .Cache();
             };
 
             Func<IStreamable<Empty, float>> DataFn(long p, long s)
             {
-                return () => new TestObs(p, s)
+                return () => new SynDataObs(p, s)
                     .ToStreamable()
                     .Cache();
             }
@@ -73,6 +73,13 @@ namespace bench
             Func<IStreamable<Empty, TaxiRide>> TaxiRideDataFn(long p, long s)
             {
                 return () => new TaxiRideData(p, s)
+                    .ToStreamable()
+                    .Cache();
+            }
+
+            Func<IStreamable<Empty, Interaction>> YahooDataFn(long p, long s)
+            {
+                return () => new YahooObs(p, s)
                     .ToStreamable()
                     .Cache();
             }
@@ -135,7 +142,7 @@ namespace bench
                     long operiod = 5;
                     Func<IStreamable<Empty, float>> sig4 = () =>
                     {
-                        return new TestObs(iperiod, size)
+                        return new SynDataObs(iperiod, size)
                             .ToStreamable()
                             .Cache();
                     };
@@ -192,6 +199,12 @@ namespace bench
                     time = RunTest(DataFn(period, size), stream =>
                         stream
                             .Eg2(10, 20)
+                    );
+                    break;
+                case "yahoo":
+                    time = RunTest(YahooDataFn(period, size), stream =>
+                        stream
+                            .Yahoo(10, 1)
                     );
                     break;
                 default:

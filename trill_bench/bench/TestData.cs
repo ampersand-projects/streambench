@@ -7,42 +7,33 @@ namespace bench
 {
     using test_t = StreamEvent<float>;
 
-    public class TestObs : IObservable<test_t>
+    public abstract class TestObs<T> : IObservable<T>
     {
         public long size;
         public long period;
-        public List<test_t> data;
+        public List<T> data;
 
         public TestObs(long period, long size)
         {
             this.period = period;
             this.size = size;
-            this.data = new List<test_t>();
+            this.data = new List<T>();
             Sample();
         }
 
-        private void Sample()
-        {
-            var rand = new Random();
-            double range = 100.0;
-            for (long i = 0; i < size; i++)
-            {
-                var payload = rand.NextDouble() * range - (range / 2);
-                data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, (float) payload));
-            }
-        }
+        public abstract void Sample();
 
-        public IDisposable Subscribe(IObserver<test_t> observer)
+        public IDisposable Subscribe(IObserver<T> observer)
         {
             return new Subscription(this, observer);
         }
 
         private sealed class Subscription : IDisposable
         {
-            private readonly TestObs observable;
-            private readonly IObserver<test_t> observer;
+            private readonly TestObs<T> observable;
+            private readonly IObserver<T> observer;
 
-            public Subscription(TestObs observable, IObserver<test_t> observer)
+            public Subscription(TestObs<T> observable, IObserver<T> observer)
             {
                 this.observer = observer;
                 this.observable = observable;
@@ -64,6 +55,22 @@ namespace bench
 
             public void Dispose()
             {
+            }
+        }
+    }
+
+    public class SynDataObs : TestObs<test_t>
+    {
+        public SynDataObs(long period, long size) : base(period, size)
+        {}
+        public override void Sample()
+        {
+            var rand = new Random();
+            double range = 100.0;
+            for (long i = 0; i < size; i++)
+            {
+                var payload = rand.NextDouble() * range - (range / 2);
+                data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, (float) payload));
             }
         }
     }

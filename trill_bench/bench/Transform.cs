@@ -409,5 +409,25 @@ namespace Microsoft.StreamProcessing
                 )
                 .Select(e => e.Item1 > e.Item2);
         }
+
+        /// <summary> 
+        /// </summary>
+        /// <param name="source">Input stream of Interactions</param>
+        /// <param name="window">Size of the window</param>
+        /// <param name="event_type">Event type to filter on</param>
+        /// <returns> Windowed count of events that have the type given by event_type </returns>
+        public static IStreamable<TKey, ulong> Yahoo<TKey>(
+            this IStreamable<TKey, Interaction> source,
+            long window, long event_type
+        )
+        {
+            return source
+                .Where(e => e.event_type == event_type)
+                .Select(e => new {e.campaignID, e.event_type})
+                .TumblingWindowLifetime(window)
+                .Count();
+        }
+
+
     }
 }
