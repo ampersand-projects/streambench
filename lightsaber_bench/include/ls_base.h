@@ -14,7 +14,8 @@
 #include "utils/Query.h"
 #include "utils/WindowDefinition.h"
 
-class Benchmark {
+class Benchmark
+{
     public:
     struct alignas(16) InputSchema {
         long st;
@@ -27,7 +28,8 @@ class Benchmark {
     QueryApplication *application = nullptr;
     virtual void createApplication() = 0;
 
-    TupleSchema *getSchema() {
+    virtual TupleSchema *getSchema()
+    {
         auto schema = new TupleSchema(3, "Micro-Benchmark");
         auto longAttr = AttributeType(BasicType::Long);
         auto floatAttr = AttributeType(BasicType::Float);
@@ -39,7 +41,8 @@ class Benchmark {
         return schema;
     }
 
-    void PopulateBufferWithData(int64_t size, int64_t period) {
+    virtual void PopulateBufferWithData(int64_t size, int64_t period)
+    {
         double range = 100;
 
         InputBuffer = new std::vector<char> (size * sizeof(InputSchema));
@@ -51,7 +54,8 @@ class Benchmark {
         }
     }
 
-    int64_t runBenchmark(int64_t size, int64_t period) {
+    int64_t runBenchmark(int64_t size, int64_t period)
+    {
         PopulateBufferWithData(size, period);
 
         auto start_time = std::chrono::high_resolution_clock::now();
