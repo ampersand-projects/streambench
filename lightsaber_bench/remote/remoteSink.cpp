@@ -25,6 +25,15 @@ struct alignas(16) AggregateOutputSchema {
     }
 };
 
+struct alignas(16) YahooOutputSchema {
+    long timestamp;
+    int count;
+
+    void print_data() {
+        std::cout << "[" << timestamp << "]: " << count << std::endl;
+    }
+};
+
 template<typename T>
 class RemoteSink {
     protected:
@@ -96,10 +105,13 @@ int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
     int64_t output_size = (argc > 2) ? atoi(argv[2]) : 10000000;
     if (testcase == "aggregate") {
-        std::unique_ptr<RemoteSink<AggregateOutputSchema>> remoteSink = std::make_unique<RemoteSink<AggregateOutputSchema>>();
+        auto remoteSink = std::make_unique<RemoteSink<AggregateOutputSchema>>();
+        remoteSink->run(output_size);
+    } else if (testcase == "yahoo") {
+        auto remoteSink = std::make_unique<RemoteSink<YahooOutputSchema>>();
         remoteSink->run(output_size);
     } else {
-        std::unique_ptr<RemoteSink<OutputSchema>> remoteSink = std::make_unique<RemoteSink<OutputSchema>>();
+        auto remoteSink = std::make_unique<RemoteSink<OutputSchema>>();
         remoteSink->run(output_size);
     }
     return 0;

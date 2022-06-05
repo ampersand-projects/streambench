@@ -15,3 +15,6 @@
 	path = grizzly_bench/grizzly-prototype
 	url = https://github.com/ampersand-projects/grizzly-prototype.git
 	branch = bench
+[submodule "streambox_bench/streambox"]
+	path = streambox_bench/streambox
+	url = https://github.com/wzhao18/streambox.git

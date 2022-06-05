@@ -9,9 +9,11 @@
 #include "cql/operators/codeGeneration/OperatorKernel.h"
 
 
-class SelectBench : public Benchmark {
+class SelectBench : public Benchmark
+{
     long window_size;
-    void createApplication() override {
+    void createApplication() override
+    {
         // Configure projection
         std::vector<Expression *> expressions(3);
         // Always project the timestamp
@@ -44,7 +46,9 @@ class SelectBench : public Benchmark {
     }
 
     public:
-    SelectBench(long window_size) : window_size(window_size){
+    SelectBench(long window_size)
+        : window_size(window_size)
+    {
         createApplication();
     }
 };

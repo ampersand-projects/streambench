@@ -157,58 +157,17 @@ namespace bench
         }
     }
 
-    public abstract class TaxiDataObs<T> : IObservable<T>
+    public abstract class TaxiDataObs<T> : TestObs<T>
     {
-        public long size;
-        public long period;
-        public List<T> data;
         public DateTime datetime_base;
 
-        public TaxiDataObs(long period, long size)
+        public TaxiDataObs(long period, long size) : base(period, size)
         {
-            this.period = period;
-            this.size = size;
-            this.data = new List<T>();
             this.datetime_base = new DateTime(2021, 10, 1, 0, 0, 0);
             Sample();
         }
 
-        public abstract void Sample();
-
-        public IDisposable Subscribe(IObserver<T> observer)
-        {
-            return new Subscription(this, observer);
-        }
-
-        private sealed class Subscription : IDisposable
-        {
-            private readonly TaxiDataObs<T> observable;
-            private readonly IObserver<T> observer;
-
-            public Subscription(TaxiDataObs<T> observable, IObserver<T> observer)
-            {
-                this.observer = observer;
-                this.observable = observable;
-                ThreadPool.QueueUserWorkItem(
-                    arg =>
-                    {
-                        this.Sample();
-                        this.observer.OnCompleted();
-                    });
-            }
-
-            private void Sample()
-            {
-                for (int i = 0; i < observable.data.Count; i++)
-                {
-                    this.observer.OnNext(observable.data[i]);
-                }
-            }
-
-            public void Dispose()
-            {
-            }
-        }
+        public override abstract void Sample();
     }
 
     public class TaxiFareData : TaxiDataObs<StreamEvent<TaxiFare>>

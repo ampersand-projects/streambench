@@ -8,11 +8,13 @@
 #include "cql/operators/codeGeneration/OperatorKernel.h"
 
 
-class AlterDurBench : public Benchmark {
+class AlterDurBench : public Benchmark
+{
     public:
     long dur;
     long window_size;
-    void createApplication() override {
+    void createApplication() override
+    {
         // Configure projection
         std::vector<Expression *> expressions(3);
         // Always project the timestamp
@@ -45,7 +47,9 @@ class AlterDurBench : public Benchmark {
     }
 
     public:
-    AlterDurBench(long new_dur, long window_size) : dur(new_dur), window_size(window_size) {
+    AlterDurBench(long new_dur, long window_size)
+        : dur(new_dur), window_size(window_size)
+    {
         createApplication();
     }
 };
