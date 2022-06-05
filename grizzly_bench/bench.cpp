@@ -12,7 +12,15 @@ int main(int argc, const char *argv[])
   std::string testcase = (argc > 1) ? argv[1] : "select";
   long bufferSize = (argc > 2) ? std::stoi(argv[2]) : 10000000;
   int parallelism = (argc > 3) ? std::stoi(argv[3]) : 1;
-  std::string path = (argc > 4) ? argv[4] : "../data-generator/test_data.bin";
+
+  std::string path;
+  if (testcase != "yahoo"){
+    path = (argc > 4) ? argv[4] : "../data-generator/test_data.bin";
+  }
+  else {
+    path = (argc > 4) ? argv[4] : "../data-generator/yahoo_data.bin";
+  }
+
   int period = 1;
 
   Config config = Config::create()
@@ -35,8 +43,15 @@ int main(int argc, const char *argv[])
                       .addFixSizeField("start_time", DataType::Long, Stream)
                       .addFixSizeField("end_time", DataType::Long, Stream)
                       .addFixSizeField("payload", DataType::Double, Stream);
+  
+  Schema yahoo_schema = Schema::create()
+                      .addFixSizeField("start_time", DataType::Long, Stream)
+                      .addFixSizeField("end_time", DataType::Long, Stream)
+                      .addFixSizeField("userID", DataType::Long, Stream)
+                      .addFixSizeField("campaignID", DataType::Long, Stream)
+                      .addFixSizeField("event_type", DataType::Long, Stream);
 
-  long time;
+  long time, win_size;
   if (testcase == "select") {
     time = Query::generate(config, schema, path)
         .map(Add("payload", 3))
@@ -48,7 +63,7 @@ int main(int argc, const char *argv[])
         .toOutputBuffer()
         .run();
   } else if (testcase == "aggregate") {
-    long win_size = 1000;
+    win_size = 1000;
     time = Query::generate(config, schema, path)
         .window(TumblingProcessingTimeWindow(Time::seconds(win_size / period)))
         .aggregate(CustomSum())
@@ -57,6 +72,16 @@ int main(int argc, const char *argv[])
   } else if (testcase == "alterdur") {
     time = Query::generate(config, schema, path)
         .map(Add("start_time", 10 * period, "end_time"))
+        .toOutputBuffer()
+        .run();
+  } else if (testcase == "yahoo") {
+    win_size = 10;
+    long event_type = 1;
+    time = Query::generate(config, yahoo_schema, path)
+        .filter(new Equal("event_type", event_type))
+        .select({"campaignID", "event_type"})
+        .window(TumblingProcessingTimeWindow(Time::seconds(win_size / period)))
+        .aggregate(Count())
         .toOutputBuffer()
         .run();
   } else {
