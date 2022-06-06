@@ -99,14 +99,15 @@ public:
 
         while (true) {
             read_one_batch();
-            print_buffer();
+            std::cout << "Successfully read " << batch_size << " tuples." << std::endl;
+            // print_buffer();
         }
     }
 };
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t batch_size = (argc > 2) ? atoi(argv[2]) : 100000;
+    int64_t batch_size = (argc > 2) ? atoi(argv[2]) : 10000000;
 
     if (testcase == "aggregate") {
         auto remoteSink = std::make_unique<RemoteSink<AggregateOutputSchema>>(batch_size);

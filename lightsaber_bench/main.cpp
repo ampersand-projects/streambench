@@ -6,7 +6,7 @@
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t size = (argc > 2) ? atoi(argv[2]) : 50000000;
+    int64_t size = (argc > 2) ? atoi(argv[2]) : 40000000;
     int64_t runs = (argc > 3) ? atoi(argv[3]) : 100;
     int64_t period = 1;
     SystemConf::getInstance().BATCH_SIZE = 200000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 200,000
