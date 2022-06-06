@@ -54,16 +54,9 @@ class Benchmark
         }
     }
 
-    int64_t runBenchmark(int64_t size, int64_t period)
+    void runBenchmark()
     {
-        PopulateBufferWithData(size, period);
-
-        auto start_time = std::chrono::high_resolution_clock::now();
-        application->processData(*InputBuffer, -1);
-        auto end_time = std::chrono::high_resolution_clock::now();
-        
-        int64_t time = duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-        return time;
+        application->processData(*InputBuffer);
     }
 
 };
