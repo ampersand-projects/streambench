@@ -54,11 +54,26 @@ class Benchmark
         }
     }
 
-    void runBenchmark()
+    int64_t runBenchmark(int64_t size, int64_t period, int64_t runs)
     {
-        application->processData(*InputBuffer);
-    }
+        PopulateBufferWithData(size, period);
 
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        for (int64_t i = 0; i < runs; i++) {
+            application->processData(*InputBuffer);
+        }
+
+        // Signal that no more tasks will be enqueued
+        application->closeTaskQueue();
+        // Wait for worker threads to finish executions
+        application->waitForCompletion();
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        int64_t time = duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        
+        return time;
+    }
 };
 
 #endif // LIGHTSABER_BENCH_INCLUDE_BENCHMARK_H_

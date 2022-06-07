@@ -7,10 +7,11 @@
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 40000000;
-    int64_t runs = (argc > 3) ? atoi(argv[3]) : 100;
+    int64_t runs = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t period = 1;
     SystemConf::getInstance().BATCH_SIZE = 200000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 200,000
     SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(Benchmark::InputSchema);
+    SystemConf::getInstance().WORKER_THREADS = 1;
 
     std::unique_ptr<Benchmark> benchmarkQuery {};
     if (testcase == "select") {
@@ -28,10 +29,10 @@ int main(int argc, const char **argv) {
         throw std::runtime_error("Invalid testcase");
     }
 
-    benchmarkQuery->PopulateBufferWithData(size, period);
-    for (size_t i = 0; i < runs; i++) {
-        benchmarkQuery->runBenchmark();
-    }
+    double time = benchmarkQuery->runBenchmark(size, period, runs);
+
+    std::cout << "Testcase: " << testcase << ", Size: " << size * runs
+        << ", Time: " << std::setprecision(3) << time / 1000000 << std::endl;
 
     return 0;
 }
