@@ -12,14 +12,7 @@ int main(int argc, const char *argv[])
   std::string testcase = (argc > 1) ? argv[1] : "select";
   long bufferSize = (argc > 2) ? std::stoi(argv[2]) : 10000000;
   int parallelism = (argc > 3) ? std::stoi(argv[3]) : 1;
-
-  std::string path;
-  if (testcase != "yahoo"){
-    path = (argc > 4) ? argv[4] : "../data-generator/test_data.bin";
-  }
-  else {
-    path = (argc > 4) ? argv[4] : "../data-generator/yahoo_data.bin";
-  }
+  std::string path = (argc > 4) ? argv[4] : (testcase == "yahoo" ? "yahoo_data.bin" : "test_data.bin" );
 
   int period = 1;
 
@@ -51,7 +44,7 @@ int main(int argc, const char *argv[])
                       .addFixSizeField("campaignID", DataType::Long, Stream)
                       .addFixSizeField("event_type", DataType::Long, Stream);
 
-  long time, win_size;
+  long time;
   if (testcase == "select") {
     time = Query::generate(config, schema, path)
         .map(Add("payload", 3))
@@ -63,7 +56,7 @@ int main(int argc, const char *argv[])
         .toOutputBuffer()
         .run();
   } else if (testcase == "aggregate") {
-    win_size = 1000;
+    long win_size = 1000;
     time = Query::generate(config, schema, path)
         .window(TumblingProcessingTimeWindow(Time::seconds(win_size / period)))
         .aggregate(CustomSum())
@@ -75,8 +68,7 @@ int main(int argc, const char *argv[])
         .toOutputBuffer()
         .run();
   } else if (testcase == "yahoo") {
-    win_size = 10;
-    long event_type = 1;
+    long win_size = 10, event_type = 1;
     time = Query::generate(config, yahoo_schema, path)
         .filter(new Equal("event_type", event_type))
         .select({"campaignID", "event_type"})

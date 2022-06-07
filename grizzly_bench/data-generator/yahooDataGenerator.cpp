@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 
   yahooData *recs = new yahooData[size];
 
-  double range = 100.0;
   for (size_t i = 0; i < size; i++) {
     recs[i].start_time = i * period;
     recs[i].end_time = (i + 1) * period;
