@@ -5,6 +5,7 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.streambench.Bench.Data;
+import org.streambench.Transform.ReducedYahooInteraction;
 import org.streambench.Transform.ZScore;
 
 public class Utility {
@@ -146,4 +147,33 @@ public class Utility {
             return a;
         }
     }
+
+    public static class YahooAggregation implements AggregateFunction<ReducedYahooInteraction, Data, Data> {
+        @Override
+        public Data createAccumulator() {
+            return new Data((long) Integer.MAX_VALUE, 0, 0);
+        }
+
+        @Override
+        public Data add(ReducedYahooInteraction value, Data accumulator) {
+            accumulator.start_time = Math.min(accumulator.start_time, value.start_time);
+            accumulator.end_time = Math.max(accumulator.end_time, value.end_time);
+            accumulator.payload += 1;
+            return accumulator;
+        }
+
+        @Override
+        public Data getResult(Data accumulator) {
+            return new Data(accumulator.start_time, accumulator.end_time, accumulator.payload);
+        }
+
+        @Override
+        public Data merge(Data a, Data b) {
+            a.start_time = Math.min(a.start_time, b.start_time);
+            a.end_time = Math.max(a.end_time, b.end_time);
+            a.payload += b.payload;
+            return a;
+        }
+    }
+
 }
