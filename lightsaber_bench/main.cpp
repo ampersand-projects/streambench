@@ -6,12 +6,12 @@
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t size = (argc > 2) ? atoi(argv[2]) : 40000000;
+    int64_t size = (argc > 2) ? atoi(argv[2]) : 10000000; // In # of events
     int64_t runs = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t cores = (argc > 4) ? atoi(argv[4]) : 1;
     int64_t period = 1;
-    SystemConf::getInstance().BATCH_SIZE = 200000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 200,000
-    SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(Benchmark::InputSchema);
+    SystemConf::getInstance().BATCH_SIZE = 131072; // In Bytes
+    SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 2 * size * sizeof(Benchmark::InputSchema); // In Bytes, the coefficient is worth tuning
     SystemConf::getInstance().WORKER_THREADS = cores;
 
     std::unique_ptr<Benchmark> benchmarkQuery {};
@@ -24,7 +24,7 @@ int main(int argc, const char **argv) {
     } else if (testcase == "alterdur") {
         benchmarkQuery = std::make_unique<AlterDurBench>(1, 60);
     } else if (testcase == "yahoo") {
-        SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(YahooBench::YahooSchema);
+        SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 2 * size * sizeof(YahooBench::YahooSchema);
         benchmarkQuery = std::make_unique<YahooBench>(1000);
     } else {
         throw std::runtime_error("Invalid testcase");

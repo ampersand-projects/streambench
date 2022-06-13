@@ -41,6 +41,9 @@ class YahooBench : public Benchmark
 
     void createApplication() override
     {
+        SystemConf::getInstance().SLOTS = 256;
+        SystemConf::getInstance().PARTIAL_WINDOWS = 64;
+        
         // Filter out event that has event_type == 1
         auto predicate = new ComparisonPredicate(EQUAL_OP, new ColumnReference(4, BasicType::Long), new LongConstant(1));
         Selection *selection = new Selection(predicate);
