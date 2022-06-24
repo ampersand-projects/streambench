@@ -164,17 +164,16 @@ namespace bench
         public TaxiDataObs(long period, long size) : base(period, size)
         {
             this.datetime_base = new DateTime(2021, 10, 1, 0, 0, 0);
-            Sample();
         }
 
-        public override abstract void Sample();
+        public override abstract TestObs<T> Init();
     }
 
     public class TaxiFareData : TaxiDataObs<StreamEvent<TaxiFare>>
     {
         public TaxiFareData(long period, long size) : base(period, size)
         {}
-        public override void Sample()
+        public override TestObs<StreamEvent<TaxiFare>> Init()
         {
             var rand = new Random();
             for (int i = 0; i < size; i++)
@@ -205,6 +204,7 @@ namespace bench
                 );
                 data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, payload));
             }
+            return this;
         }
     }
 
@@ -212,7 +212,7 @@ namespace bench
     {
         public TaxiRideData(long period, long size) : base(period, size)
         {}
-        public override void Sample()
+        public override TestObs<StreamEvent<TaxiRide>> Init()
         {
             var rand = new Random();
             for (int i = 0; i < size; i++)
@@ -248,6 +248,8 @@ namespace bench
                 );
                 data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, payload));
             }
+
+            return this;
         }
     }
 }

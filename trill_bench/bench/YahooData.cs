@@ -23,7 +23,7 @@ namespace bench
         public YahooObs(long period, long size) : base(period, size)
         {}
 
-        public override void Sample()
+        public override TestObs<StreamEvent<Interaction>> Init()
         {
             var rand = new Random();
             for (long i = 0; i < size; i++)
@@ -35,6 +35,8 @@ namespace bench
 
                 data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, payload));
             }
+
+            return this;
         }
     }
 }

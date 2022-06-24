@@ -5,7 +5,7 @@ using Microsoft.StreamProcessing;
 
 namespace bench
 {
-    using test_t = StreamEvent<float>;
+    using test_t = PartitionedStreamEvent<int, float>;
 
     public abstract class TestObs<T> : IObservable<T>
     {
@@ -18,10 +18,9 @@ namespace bench
             this.period = period;
             this.size = size;
             this.data = new List<T>();
-            Sample();
         }
 
-        public abstract void Sample();
+        public abstract TestObs<T> Init();
 
         public IDisposable Subscribe(IObserver<T> observer)
         {
@@ -61,17 +60,27 @@ namespace bench
 
     public class SynDataObs : TestObs<test_t>
     {
-        public SynDataObs(long period, long size) : base(period, size)
-        {}
-        public override void Sample()
+        private int keys;
+
+        public SynDataObs(long period, long size, int keys = 1) : base(period, size)
+        {
+            this.keys = keys;
+        }
+        public override TestObs<test_t> Init()
         {
             var rand = new Random();
             double range = 100.0;
             for (long i = 0; i < size; i++)
             {
                 var payload = rand.NextDouble() * range - (range / 2);
-                data.Add(StreamEvent.CreateInterval(i * period, (i + 1) * period, (float) payload));
+                for (int k = 0; k < keys; k++)
+                {
+                    var e = PartitionedStreamEvent.CreateInterval(k, i * period, (i + 1) * period, (float) payload);
+                    data.Add(e);   
+                }
             }
+
+            return this;
         }
     }
 }

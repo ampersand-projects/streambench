@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Reactive.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.StreamProcessing;
 
 namespace bench
 {
     class Program
     {
-        static double RunTest<TPayload, TResult>(Func<IStreamable<Empty, TPayload>> data,
-            Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform)
+        static double RunTest<TPayload, TResult>(Func<StreamCache<PartitionKey<int>, TPayload>> data,
+            Func<StreamCache<PartitionKey<int>, TPayload>, IStreamable<PartitionKey<int>, TResult>> transform)
         {
             var stream = data();
 
@@ -24,16 +25,17 @@ namespace bench
         }
         
         static double RunTest<TPayload1, TPayload2, TResult>(
-            Func<IStreamable<Empty, TPayload1>> data1, 
-            Func<IStreamable<Empty, TPayload2>> data2,
-            Func<IStreamable<Empty, TPayload1>, IStreamable<Empty, TPayload2>, IStreamable<Empty, TResult>> transform)
+            Func<StreamCache<PartitionKey<int>, TPayload1>> data1, 
+            Func<StreamCache<PartitionKey<int>, TPayload2>> data2,
+            Func<StreamCache<PartitionKey<int>, TPayload1>, StreamCache<PartitionKey<int>, TPayload2>,
+                IStreamable<PartitionKey<int>, TResult>> transform)
         {
             var stream = data1();
             var stream2 = data2();
 
             var sw = new Stopwatch();
             sw.Start();
-            var s_obs = transform(stream,stream2);
+            var s_obs = transform(stream, stream2);
 
             s_obs
                 .ToStreamEventObservable()
@@ -48,17 +50,12 @@ namespace bench
             long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
             long period = 1;
             double time = 0;
+            int keys = 1;
 
-            Func<IStreamable<Empty, float>> data = () =>
+            Func<StreamCache<PartitionKey<int>, float>> DataFn(long p, long s)
             {
-                return new SynDataObs(period, size)
-                    .ToStreamable()
-                    .Cache();
-            };
-
-            Func<IStreamable<Empty, float>> DataFn(long p, long s)
-            {
-                return () => new SynDataObs(p, s)
+                return () => new SynDataObs(p, s, keys)
+                    .Init()
                     .ToStreamable()
                     .Cache();
             }
@@ -140,7 +137,7 @@ namespace bench
                 case "resample":
                     long iperiod = 4;
                     long operiod = 5;
-                    Func<IStreamable<Empty, float>> sig4 = () =>
+                    Func<StreamCache<PartitionKey<int>, float>> sig4 = () =>
                     {
                         return new SynDataObs(iperiod, size)
                             .ToStreamable()
@@ -181,6 +178,7 @@ namespace bench
                             .Kurtosis(100)
                     );
                     break;
+                /*
                 case "taxi":
                     time = RunTest(TaxiRideDataFn(period, size),
                                    TaxiFareDataFn(period, size),
@@ -210,6 +208,7 @@ namespace bench
                 default:
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
                     return;
+                */
             }
             Console.WriteLine("Benchmark: {0}, Time: {1:.###} sec", testcase, time);
         }
