@@ -1,24 +1,34 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Microsoft.StreamProcessing;
 
 namespace bench
 {
     class Program
     {
-        static double RunTest<TPayload, TResult>(Func<IStreamable<Empty, TPayload>> data,
+        static double RunTest<TPayload, TResult>(int threads, Func<IStreamable<Empty, TPayload>> data,
             Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform)
         {
-            var stream = data();
+            var streams = new IStreamable<Empty, TPayload>[threads];
+            
+            Parallel.For(0, threads, i =>
+            {
+                streams[i] = data();
+            });
 
             var sw = new Stopwatch();
             sw.Start();
-            var s_obs = transform(stream);
+            Parallel.For(0, threads, i => {
+                var s_obs = transform(streams[i]);
+                s_obs
+                    .ToStreamEventObservable()
+                    .Wait();
+            });
 
-            s_obs
-                .ToStreamEventObservable()
-                .Wait();
             sw.Stop();
             return sw.Elapsed.TotalSeconds;
         }
@@ -44,10 +54,11 @@ namespace bench
 
         static void Main(string[] args)
         {
-            string testcase = (args.Length > 0) ? args[0] : "normalize";
+            string testcase = (args.Length > 0) ? args[0] : "select";
             long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
             long period = 1;
             double time = 0;
+            int threads = (args.Length > 2) ? int.Parse(args[2]) : 1;
 
             Func<IStreamable<Empty, float>> data = () =>
             {
@@ -87,26 +98,26 @@ namespace bench
             switch (testcase)
             {
                 case "select":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Select(e => e + 3)
                     );
                     break;
                 case "where":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Where(e => e > 0)
                     );
                     break;
                 case "aggregate":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .TumblingWindowLifetime(1000 * period)
                             .Sum(e => e)
                     );
                     break;
                 case "alterdur":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .AlterEventDuration(10 * period)
                     );
@@ -126,13 +137,13 @@ namespace bench
                     );
                     break;
                 case "normalize":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Normalize(10000)
                     );
                     break;
                 case "fillmean":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .FillMean(10000, period)
                     );
@@ -146,37 +157,37 @@ namespace bench
                             .ToStreamable()
                             .Cache();
                     };
-                    time = RunTest(sig4, stream =>
+                    time = RunTest(threads, sig4, stream =>
                         stream
                             .Resample(iperiod, operiod)
                     );
                     break;
                 case "algotrading":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .AlgoTrading(50, 20, period)
                     );    
                     break;
                 case "largeqty":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .LargeQty(10, period)
                     );    
                     break;
                 case "rsi":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .RSI(14, period)
                     );       
                     break;
                 case "pantom":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .PanTom(period)
                     );
                     break;
                 case "kurtosis":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Kurtosis(100)
                     );
@@ -190,19 +201,19 @@ namespace bench
                     );
                     break;
                 case "eg1":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Eg1(10, 20)
                     );
                     break;
                 case "eg2":
-                    time = RunTest(DataFn(period, size), stream =>
+                    time = RunTest(threads, DataFn(period, size), stream =>
                         stream
                             .Eg2(10, 20)
                     );
                     break;
                 case "yahoo":
-                    time = RunTest(YahooDataFn(period, size), stream =>
+                    time = RunTest(threads, YahooDataFn(period, size), stream =>
                         stream
                             .Yahoo(10, 1)
                     );
