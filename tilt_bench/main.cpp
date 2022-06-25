@@ -108,8 +108,14 @@ int main(int argc, char** argv)
         Eg7Bench bench(period, size, 10, 20, size);
         time = bench.run();
     } else if (testcase == "yahoo") {
-        YahooBench bench(period, size, 10 * period);
-        time = bench.run();
+        auto start_time = high_resolution_clock::now();
+        #pragma omp parallel for
+        for (int i=0; i<16; i++) {
+            YahooBench bench(period, size, 100 * period);
+            bench.run();
+        }
+        auto end_time = high_resolution_clock::now();
+        time = duration_cast<microseconds>(end_time - start_time).count();
     } else {
         throw runtime_error("Invalid testcase");
     }

@@ -85,7 +85,7 @@ public:
     virtual void init() = 0;
     virtual void release() = 0;
 
-    int64_t run()
+    intptr_t compile()
     {
         auto query_op = query();
         auto query_op_sym = _sym("query", query_op);
@@ -98,6 +98,11 @@ public:
         jit->AddModule(move(llmod));
         auto addr = jit->Lookup(loop->get_name());
 
+        return addr;
+    }
+
+    int64_t run(intptr_t addr)
+    {
         init();
 
         auto start_time = high_resolution_clock::now();
@@ -107,6 +112,11 @@ public:
         release();
 
         return duration_cast<microseconds>(end_time - start_time).count();
+    }
+
+    int64_t run()
+    {
+        return run(compile());
     }
 
     template<typename T>
