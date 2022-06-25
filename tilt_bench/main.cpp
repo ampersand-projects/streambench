@@ -17,6 +17,7 @@
 #include "tilt_resample.h"
 #include "tilt_kurt.h"
 #include "tilt_eg.h"
+#include "tilt_yahoo.h"
 
 using namespace std;
 
@@ -105,6 +106,9 @@ int main(int argc, char** argv)
         time = bench.run();
     } else if (testcase == "eg7") {
         Eg7Bench bench(period, size, 10, 20, size);
+        time = bench.run();
+    } else if (testcase == "yahoo") {
+        YahooBench bench(period, size, 10 * period);
         time = bench.run();
     } else {
         throw runtime_error("Invalid testcase");

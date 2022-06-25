@@ -44,6 +44,42 @@ private:
     int64_t len;
 };
 
+struct Yahoo {
+    long user_id;
+    long camp_id;
+    long event_type;
+    long padding;
+
+    Yahoo(int user_id, int camp_id, int event_type) :
+        user_id(user_id), camp_id(camp_id), event_type(event_type)
+    {}
+
+    Yahoo() {}
+};
+
+class YahooData : public Dataset<Yahoo> {
+public:
+    YahooData(dur_t period, int64_t len) : period(period), len(len) {}
+
+    void fill(region_t* reg) final
+    {
+        double range = 100;
+
+        auto data = reinterpret_cast<Yahoo*>(reg->data);
+        for (int i = 0; i < len; i++) {
+            auto t = period * (i + 1);
+            commit_data(reg, t);
+            auto* ptr = reinterpret_cast<Yahoo*>(fetch(reg, t, get_end_idx(reg), sizeof(Yahoo)));
+            *ptr = Yahoo(rand() % 5 + 1, rand() % 5 + 1, rand() % 5 + 1);
+        }
+    }
+
+private:
+    dur_t period;
+    int64_t len;
+};
+
+
 class Benchmark {
 public:
     virtual void init() = 0;

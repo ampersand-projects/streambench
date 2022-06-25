@@ -21,6 +21,21 @@ Op _Select(_sym in, _sym val, function<Expr(_sym, _sym)> selector)
     return sel_op;
 }
 
+Op _Where(_sym in, function<Expr(_sym)> filter)
+{
+    auto e = in[_pt(0)];
+    auto e_sym = _sym("e", e);
+    auto pred = filter(e_sym);
+    auto cond = _exists(e_sym) && pred;
+    auto where_op = _op(
+        _iter(0, 1),
+        Params{in},
+        SymTable{{e_sym, e}},
+        cond,
+        e_sym);
+    return where_op;
+}
+
 Expr _Count(_sym win)
 {
     auto acc = [](Expr s, Expr st, Expr et, Expr d) { return _add(s, _f32(1)); };

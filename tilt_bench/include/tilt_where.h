@@ -3,26 +3,12 @@
 
 #include "tilt/builder/tilder.h"
 #include "tilt_bench.h"
+#include "tilt_base.h"
 
 #include "iostream"
 
 using namespace tilt;
 using namespace tilt::tilder;
-
-Op _Where(_sym in, function<Expr(_sym)> filter)
-{
-    auto e = in[_pt(0)];
-    auto e_sym = _sym("e", e);
-    auto pred = filter(e_sym);
-    auto cond = _exists(e_sym) && pred;
-    auto where_op = _op(
-        _iter(0, 1),
-        Params{in},
-        SymTable{{e_sym, e}},
-        cond,
-        e_sym);
-    return where_op;
-}
 
 class WhereBench : public Benchmark {
 public:
