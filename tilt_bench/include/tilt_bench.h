@@ -103,8 +103,6 @@ public:
 
     int64_t run(intptr_t addr)
     {
-        init();
-
         auto start_time = high_resolution_clock::now();
         execute(addr);
         auto end_time = high_resolution_clock::now();
@@ -116,7 +114,9 @@ public:
 
     int64_t run()
     {
-        return run(compile());
+	auto addr = compile();
+        init();
+        return run(addr);
     }
 
     template<typename T>

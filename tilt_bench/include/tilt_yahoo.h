@@ -35,7 +35,6 @@ public:
         period(period), size(size), w(w)
     {}
 
-private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::STRUCT<long, long, long, long>(), _iter(0, -1)));

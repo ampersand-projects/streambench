@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <sys/resource.h>
 
 #include "tilt_select.h"
@@ -40,6 +41,7 @@ int main(int argc, char** argv)
 
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
+    int threads = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t period = 1;
 
     double time = 0;
@@ -108,14 +110,20 @@ int main(int argc, char** argv)
         Eg7Bench bench(period, size, 10, 20, size);
         time = bench.run();
     } else if (testcase == "yahoo") {
-        auto start_time = high_resolution_clock::now();
+	std::vector<YahooBench*> benchs(threads);
+	for (int i=0; i<threads; i++) {
+	    benchs[i] = new YahooBench(period, size, 100 * period);
+	    benchs[i]->init();
+	}
+	auto addr = benchs[0]->compile(); 
+
+	auto start_time = high_resolution_clock::now();
         #pragma omp parallel for
-        for (int i=0; i<16; i++) {
-            YahooBench bench(period, size, 100 * period);
-            bench.run();
+        for (int i=0; i<threads; i++) {
+            benchs[i]->run(addr);
         }
-        auto end_time = high_resolution_clock::now();
-        time = duration_cast<microseconds>(end_time - start_time).count();
+	auto end_time = high_resolution_clock::now();
+	time = duration_cast<microseconds>(end_time - start_time).count();
     } else {
         throw runtime_error("Invalid testcase");
     }

@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(LLVM 11.0.0 REQUIRED CONFIG)
+find_package(OpenMP)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -23,4 +24,4 @@ set(easyjit_lib "${CMAKE_BINARY_DIR}/tilt/third_party/easy_jit/bin/EasyJitPass.s
 add_subdirectory(tilt/tilt)
 
 add_executable(main main.cpp)
-target_link_libraries(main tilt)
+target_link_libraries(main tilt OpenMP::OpenMP_CXX)
