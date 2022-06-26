@@ -116,7 +116,6 @@ public:
         period(period), w_short(w_short), w_long(w_long), scale(scale), size(size)
     {}
 
-private:
     Op query() final
     {
         auto in_sym = _sym("in", tilt::Type(types::FLOAT32, _iter(0, -1)));
