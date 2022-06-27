@@ -113,6 +113,9 @@ int main(int argc, char** argv)
 	std::vector<YahooBench*> benchs(threads);
 	for (int i=0; i<threads; i++) {
 	    benchs[i] = new YahooBench(period, size, 100 * period);
+	}
+        #pragma omp parallel for
+	for (int i=0; i<threads; i++) {
 	    benchs[i]->init();
 	}
 	auto addr = benchs[0]->compile(); 
