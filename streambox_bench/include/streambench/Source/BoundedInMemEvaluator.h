@@ -119,8 +119,8 @@ public:
 				    {
 					    auto range = get_range(bundle_per_interval, total_tasks, task_id);
 
-					    auto local_offset = (offset + records_per_bundle * range.first) % t->buffer_size_records;
-						uint64_t local_offsets[10] = {local_offset}; //support 10 input streams at most
+					    auto local_offset = offset + records_per_bundle * range.first;
+						uint64_t local_offsets[2] = {local_offset, local_offset};
 
 					    for (int i = range.first; i < range.first + range.second; i++) {
 						    
