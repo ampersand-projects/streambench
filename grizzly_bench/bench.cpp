@@ -41,7 +41,7 @@ int main(int argc, const char *argv[])
                       .addFixSizeField("start_time", DataType::Long, Stream)
                       .addFixSizeField("end_time", DataType::Long, Stream)
                       .addFixSizeField("userID", DataType::Long, Stream)
-                      .addFixSizeField("campaignID", DataType::Long, Stream)
+                      .addFixSizeField("payload", DataType::Long, Stream)
                       .addFixSizeField("event_type", DataType::Long, Stream);
 
   long time;
@@ -68,12 +68,12 @@ int main(int argc, const char *argv[])
         .toOutputBuffer()
         .run();
   } else if (testcase == "yahoo") {
-    long win_size = 10, event_type = 1;
+    long win_size = 100, event_type = 1;
     time = Query::generate(config, yahoo_schema, path)
         .filter(new Equal("event_type", event_type))
-        .select({"campaignID", "event_type"})
+        .select({"payload", "event_type"})
         .window(TumblingProcessingTimeWindow(Time::seconds(win_size / period)))
-        .aggregate(Count())
+        .aggregate(CustomSum())
         .toOutputBuffer()
         .run();
   } else {
