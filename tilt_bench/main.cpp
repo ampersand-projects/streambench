@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <limits>
 #include <sys/resource.h>
+#include <thread>
 
 #include "tilt_select.h"
 #include "tilt_where.h"
@@ -114,17 +115,21 @@ int main(int argc, char** argv)
 	for (int i=0; i<threads; i++) {
 	    benchs[i] = new YahooBench(period, size, 100 * period);
 	}
-        #pragma omp parallel for
+	#pragma omp parallel for
 	for (int i=0; i<threads; i++) {
 	    benchs[i]->init();
 	}
 	auto addr = benchs[0]->compile(); 
 
 	auto start_time = high_resolution_clock::now();
-        #pragma omp parallel for
+	std::vector<std::thread*> ts(threads);
         for (int i=0; i<threads; i++) {
-            benchs[i]->run(addr);
+	    ts[i] = new std::thread([](YahooBench* b, intptr_t addr) { b->run(addr); }, benchs[i], addr);
         }
+	for (size_t i = 0; i < threads; i++) {
+	    ts[i]->join();
+	}
+
 	auto end_time = high_resolution_clock::now();
 	time = duration_cast<microseconds>(end_time - start_time).count();
     } else {
