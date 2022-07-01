@@ -33,21 +33,29 @@ namespace bench
             return sw.Elapsed.TotalSeconds;
         }
         
-        static double RunTest<TPayload1, TPayload2, TResult>(
+        static double RunTest<TPayload1, TPayload2, TResult>(int threads,
             Func<IStreamable<Empty, TPayload1>> data1, 
             Func<IStreamable<Empty, TPayload2>> data2,
             Func<IStreamable<Empty, TPayload1>, IStreamable<Empty, TPayload2>, IStreamable<Empty, TResult>> transform)
         {
-            var stream = data1();
-            var stream2 = data2();
+            var streams = new IStreamable<Empty, TPayload1>[threads];
+            var streams2 = new IStreamable<Empty, TPayload2>[threads];
+            
+            Parallel.For(0, threads, i =>
+            {
+                streams[i] = data1();
+                streams2[i] = data2();
+            });
 
             var sw = new Stopwatch();
             sw.Start();
-            var s_obs = transform(stream,stream2);
+            Parallel.For(0, threads, i => {
+                var s_obs = transform(streams[i], streams2[i]);
+                s_obs
+                    .ToStreamEventObservable()
+                    .Wait();
+            });
 
-            s_obs
-                .ToStreamEventObservable()
-                .Wait();
             sw.Stop();
             return sw.Elapsed.TotalSeconds;
         }
@@ -123,13 +131,13 @@ namespace bench
                     );
                     break;
                 case "innerjoin":
-                    time = RunTest(DataFn(period, size), DataFn(period, size), (stream,stream2) =>
+                    time = RunTest(threads, DataFn(period, size), DataFn(period, size), (stream,stream2) =>
                         stream
                             .Join(stream2, (left, right) => left + right)
                     );        
                     break;
                 case "outerjoin":
-                    time = RunTest(DataFn(period, size), DataFn(period, size), (stream, stream2) =>
+                    time = RunTest(threads, DataFn(period, size), DataFn(period, size), (stream, stream2) =>
                         stream
                             .FullOuterJoin(stream2, e => true, e => true, 
                                 left => left, right => right, 
@@ -193,7 +201,7 @@ namespace bench
                     );
                     break;
                 case "taxi":
-                    time = RunTest(TaxiRideDataFn(period, size),
+                    time = RunTest(threads, TaxiRideDataFn(period, size),
                                    TaxiFareDataFn(period, size),
                                    (stream, stream2) =>
                         stream
