@@ -74,6 +74,13 @@ public class App {
                     stream1.col("start_time").equalTo(stream2.col("start_time")));
             runTime = runTest(innerjoin);
             break;
+        case "yahoo":
+            Dataset<Row> yahoo = stream1.filter("payload > 0")
+                    .select(functions.col("start_time"), functions.col("end_time"), functions.col("payload").plus(3.0f))
+                    .groupBy(functions.window(stream1.col("start_time"), String.format("%d milliseconds", 1000 * period)))
+                    .count();
+            runTime = runTest(yahoo);
+            break;
         default:
             System.out.println("Unknown benchmark type");
         }
