@@ -14,7 +14,8 @@ class YahooBench : public Benchmark
     long window_size;
     TupleSchema *getSchema () override
     {
-        auto schema = new TupleSchema(5, "YahooBenchmark");
+        /* For some reason, it only works when I add padding to the schema to make it 64 bytes */
+        auto schema = new TupleSchema(8, "YahooBenchmark");
         auto longAttr = AttributeType(BasicType::Long);
 
         schema->setAttributeType(0, longAttr); /*          st:  long  */
@@ -22,6 +23,9 @@ class YahooBench : public Benchmark
         schema->setAttributeType(2, longAttr); /*     user_id:  long  */
         schema->setAttributeType(3, longAttr); /* campaign_id:  long  */
         schema->setAttributeType(4, longAttr); /*  event_type:  long  */
+        schema->setAttributeType(5, longAttr); /*  dummy:  long  */
+        schema->setAttributeType(6, longAttr); /*  dummy:  long  */
+        schema->setAttributeType(7, longAttr); /*  dummy:  long  */
         
         return schema;
     }
@@ -98,6 +102,9 @@ class YahooBench : public Benchmark
         long user_id;
         long campaign_id;
         long event_type;
+        long dummy1;
+        long dummy2;
+        long dummy3;
     };
     
     YahooBench(long window_size)
