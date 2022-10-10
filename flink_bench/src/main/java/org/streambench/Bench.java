@@ -3,8 +3,10 @@ package org.streambench;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.streambench.Transform.AlgoTradeResult;
+import org.streambench.Transform.BoolStream;
+import org.streambench.Transform.YahooInteraction;
 import org.streambench.Utility.SumAggregation;
+import org.streambench.Utility.YahooAggregation;
 import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -47,6 +49,23 @@ public class Bench {
         return with_timestamp;
     }
 
+    public static DataStream<YahooInteraction> yahooGen(long size, long period, StreamExecutionEnvironment env) {
+        ArrayList<YahooInteraction> source = new ArrayList<YahooInteraction>();
+        Random rand = new Random();
+        for (int i = 0; i < size; i++) {
+            long userID = rand.nextInt(4) + 1;
+            long campaignID = rand.nextInt(4) + 1;
+            long event_type = rand.nextInt(4) + 1;
+            YahooInteraction payload = new YahooInteraction(i * period, (i + 1) * period, userID, campaignID, event_type);
+            source.add(payload);
+        }
+        DataStream<YahooInteraction> stream = env.fromCollection(source);
+        WatermarkStrategy<YahooInteraction> wmStrategy = WatermarkStrategy.<YahooInteraction>forMonotonousTimestamps()
+                .withTimestampAssigner((event, timestamp) -> event.start_time);
+        DataStream<YahooInteraction> with_timestamp = stream.assignTimestampsAndWatermarks(wmStrategy);
+        return with_timestamp;
+    }
+
     public static void main(String[] args) throws Exception {
         String benchmark = (args.length > 0) ? args[0] : "select";
         long size = (args.length > 1) ? Long.parseLong(args[1]) : 10000000;
@@ -55,6 +74,7 @@ public class Bench {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         DataStream<Data> stream1 = streamGen(size, period, env);
+        long win_size;
 
         switch (benchmark) {
             case "select":
@@ -97,12 +117,22 @@ public class Bench {
                         });
                 break;
             case "algotrade":
-                long shortwin = 20000, longwin = 50000;
-                DataStream<AlgoTradeResult> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
+                long shortwin = 20, longwin = 50;
+                DataStream<BoolStream> buy = Transform.AlgoTrade(stream1, shortwin, longwin, period);
                 break;
             case "normalize":
-                long win_size = 10000;
+                win_size = 10;
                 DataStream<Data> result = Transform.Normalization(stream1, win_size);
+                break;
+            case "largeqty":
+                win_size = 10;
+                DataStream<BoolStream> largeQty = Transform.LargeQty(stream1, win_size, period);
+                break;
+            case "yahoo":
+                win_size = 10;
+                long event_type = 1;
+                DataStream<YahooInteraction> yahoo_source = yahooGen(size, period, env);
+                DataStream<Data> yahooResult = Transform.Yahoo(yahoo_source, win_size, event_type, period);
                 break;
             default:
                 System.out.println("Unknown benchmark type");

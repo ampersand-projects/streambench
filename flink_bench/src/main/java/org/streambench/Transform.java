@@ -6,18 +6,21 @@ import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindow
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.streambench.Bench.Data;
 import org.streambench.Utility.SmaAggregation;
+import org.streambench.Utility.YahooAggregation;
 import org.streambench.Utility.ZscoreAggregation;
 import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.api.common.functions.JoinFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 
 public class Transform {
-    public static class AlgoTradeResult {
+    public static class BoolStream {
         public long start_time;
         public long end_time;
         public Boolean buy;
 
-        public AlgoTradeResult(long start_time, long end_time, Boolean buy) {
+        public BoolStream(long start_time, long end_time, Boolean buy) {
             this.start_time = start_time;
             this.end_time = end_time;
             this.buy = buy;
@@ -29,7 +32,7 @@ public class Transform {
         }
     }
 
-    static DataStream<AlgoTradeResult> AlgoTrade(DataStream<Data> source, long shortwin, long longwin, long period) {
+    static DataStream<BoolStream> AlgoTrade(DataStream<Data> source, long shortwin, long longwin, long period) {
         DataStream<Data> smaShort = source
                 .windowAll(SlidingEventTimeWindows.of(Time.milliseconds(shortwin),
                         Time.milliseconds(period)))
@@ -40,7 +43,7 @@ public class Transform {
                         Time.milliseconds(period)))
                 .aggregate(new SmaAggregation());
 
-        DataStream<AlgoTradeResult> buy = smaShort.join(smaLong).where(new KeySelector<Bench.Data, Long>() {
+        DataStream<BoolStream> buy = smaShort.join(smaLong).where(new KeySelector<Bench.Data, Long>() {
             @Override
             public Long getKey(Data left) {
                 return left.end_time;
@@ -51,10 +54,10 @@ public class Transform {
                 return right.end_time;
             }
         }).window(TumblingEventTimeWindows.of(Time.milliseconds(period)))
-                .apply(new JoinFunction<Data, Data, AlgoTradeResult>() {
+                .apply(new JoinFunction<Data, Data, BoolStream>() {
                     @Override
-                    public AlgoTradeResult join(Data first, Data second) {
-                        return new AlgoTradeResult(first.end_time, first.end_time, first.payload > second.payload);
+                    public BoolStream join(Data first, Data second) {
+                        return new BoolStream(first.end_time, first.end_time, first.payload > second.payload);
                     }
                 });
         return buy;
@@ -94,5 +97,99 @@ public class Transform {
                     }
                 });
         return results;
+    }
+
+    static DataStream<BoolStream> LargeQty(DataStream<Data> source, long win_size, long period) {
+        DataStream<ZScore> stats = source.windowAll(SlidingEventTimeWindows.of(Time.milliseconds(win_size),
+                Time.milliseconds(period))).aggregate(new ZscoreAggregation());
+
+        DataStream<ZScore> shifted = stats.map(new MapFunction<ZScore, ZScore>() {
+            public ZScore map(ZScore zscore) {
+                return new ZScore(zscore.end_time, zscore.end_time + period, zscore.avg, zscore.std);
+            }
+        });
+
+        DataStream<BoolStream> results = source.join(shifted)
+                .where(new KeySelector<Bench.Data, Long>() {
+                    @Override
+                    public Long getKey(Data left) {
+                        return left.end_time;
+                    }
+                })
+                .equalTo(new KeySelector<ZScore, Long>() {
+                    @Override
+                    public Long getKey(ZScore right) {
+                        return right.end_time;
+                    }
+                })
+                .window(SlidingEventTimeWindows.of(Time.milliseconds(2 * period), Time.milliseconds(period)))
+                .apply(new JoinFunction<Data, ZScore, BoolStream>() {
+                    @Override
+                    public BoolStream join(Data left, ZScore right) {
+                        return new BoolStream(left.start_time, left.end_time, left.payload > right.avg + 3 * right.std);
+                    }
+                });
+
+        return results;
+    }
+
+    public static class YahooInteraction {
+        public long start_time;
+        public long end_time;
+        public long userID;
+        public long campaignID;
+        public long event_type;
+
+        public YahooInteraction(long start_time, long end_time, long userID, long campaignID, long event_type) {
+            this.start_time = start_time;
+            this.end_time = end_time;
+            this.userID = userID;
+            this.campaignID = campaignID;
+            this.event_type = event_type;
+        }
+
+        public String toString() {
+            return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) + " userID: "
+                    + String.valueOf(userID) + " campaignID: " + String.valueOf(campaignID) + " event_type: "
+                    + String.valueOf(event_type);
+        }
+    }
+
+    public static class ReducedYahooInteraction {
+        public long start_time;
+        public long end_time;
+        public long campaignID;
+        public long event_type;
+
+        public ReducedYahooInteraction(long start_time, long end_time, long campaignID, long event_type) {
+            this.start_time = start_time;
+            this.end_time = end_time;
+            this.campaignID = campaignID;
+            this.event_type = event_type;
+        }
+
+        public String toString() {
+            return "start_time: " + String.valueOf(start_time) + " end_time: " + String.valueOf(end_time) 
+                    + " campaignID: " + String.valueOf(campaignID) + " event_type: " + String.valueOf(event_type);
+        }
+    }
+
+    static DataStream<Data> Yahoo(DataStream<YahooInteraction> source, long win_size, long event_type, long period) {
+        DataStream<Data> result = source
+                    .filter(new FilterFunction<YahooInteraction>() {
+                                public boolean filter(YahooInteraction data) {
+                                return data.event_type == event_type;
+                                }
+                            })
+                    .map(new MapFunction<YahooInteraction, ReducedYahooInteraction>() {
+                                public ReducedYahooInteraction map(YahooInteraction data) {
+                                return new ReducedYahooInteraction(data.start_time, data.end_time, 
+                                                                   data.campaignID, data.event_type);
+                                }
+                            })
+                    .windowAll(TumblingEventTimeWindows.of(Time.milliseconds(win_size * period)))
+                    .aggregate(new YahooAggregation());
+        
+        return result;
     }
 }
