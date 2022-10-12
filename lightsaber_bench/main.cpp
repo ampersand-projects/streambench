@@ -6,10 +6,12 @@
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t size = (argc > 2) ? atoi(argv[2]) : 10000; // In # of events
-    int64_t runs = (argc > 3) ? atoi(argv[3]) : 1000000;
+    // In # of events. This will multiply by 1000. So don't set it too much or memory will exhaust.
+    int64_t size = (argc > 2) ? atoi(argv[2]) : 100000;
+    int64_t runs = (argc > 3) ? atoi(argv[3]) : 10000;
     int64_t cores = (argc > 4) ? atoi(argv[4]) : 1;
     int64_t period = 1;
+    
     SystemConf::getInstance().BATCH_SIZE = 131072; // In Bytes
     SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 8 * size * sizeof(Benchmark::InputSchema); // In Bytes, the coefficient is worth tuning
     SystemConf::getInstance().WORKER_THREADS = cores;
@@ -26,9 +28,10 @@ int main(int argc, const char **argv) {
     } else if (testcase == "alterdur") {
         benchmarkQuery = std::make_unique<AlterDurBench>(1, 60);
     } else if (testcase == "yahoo") {
-        SystemConf::getInstance().SLOTS = 128;
-        SystemConf::getInstance().PARTIAL_WINDOWS = 32;
-        SystemConf::getInstance().HASH_TABLE_SIZE = 128;    
+        SystemConf::getInstance().BATCH_SIZE = 1048576;
+        SystemConf::getInstance().SLOTS = 512;
+        SystemConf::getInstance().PARTIAL_WINDOWS = 512;
+        SystemConf::getInstance().HASH_TABLE_SIZE = 1024;    
         SystemConf::getInstance().BUNDLE_SIZE = size * sizeof(YahooBench::YahooSchema); // not used, simply to bypass assertions.
         SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 8 * size * sizeof(YahooBench::YahooSchema);
         benchmarkQuery = std::make_unique<YahooBench>(1000);

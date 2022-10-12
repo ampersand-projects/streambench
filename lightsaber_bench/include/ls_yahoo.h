@@ -33,11 +33,11 @@ class YahooBench : public Benchmark
     void PopulateBufferWithData(int64_t size, int64_t period) override
     {
         // 10 input buffers for now
-        for (size_t i = 0; i < 10000; i++) {
+        for (size_t i = 0; i < 1000; i++) {
             auto buffer = new std::vector<char> (size * sizeof(YahooSchema));
             auto ptr = (YahooSchema *) buffer->data();
             for (unsigned long idx = 0; idx < size; idx++) {
-                ptr[idx].st = idx * period;
+                ptr[idx].st = i * 1000 + idx * period;
                 ptr[idx].dur = period;
                 ptr[idx].user_id =  static_cast<long>(rand() % 5 + 1);
                 ptr[idx].campaign_id =  static_cast<long>(2);
