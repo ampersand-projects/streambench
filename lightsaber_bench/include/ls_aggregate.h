@@ -12,9 +12,6 @@ class AggregateBench : public Benchmark
     long window_size;
     void createApplication() override
     {
-        SystemConf::getInstance().SLOTS = 256;
-        SystemConf::getInstance().PARTIAL_WINDOWS = 64;
-
         // Configure non-grouped aggregation. Check the application benchmarks for grouped aggreagations.
         std::vector<AggregationType> aggregationTypes(1);
         aggregationTypes[0] = AggregationTypes::fromString("sum");

@@ -24,7 +24,7 @@ class Benchmark
     };
     int m_sock = 0;
     int m_server_fd;
-    std::vector<char> *InputBuffer = nullptr;
+    std::vector<std::vector<char>*> InputBuffers;
     QueryApplication *application = nullptr;
     virtual void createApplication() = 0;
 
@@ -45,12 +45,16 @@ class Benchmark
     {
         double range = 100;
 
-        InputBuffer = new std::vector<char> (size * sizeof(InputSchema));
-        auto ptr = (InputSchema *) InputBuffer->data();
-        for (unsigned long idx = 0; idx < size; idx++) {
-            ptr[idx].st = idx * period;
-            ptr[idx].dur = period;
-            ptr[idx].payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
+        // 10000 input buffers, each of size 'size'
+        for (size_t i = 0; i < 10000; i++) {
+            auto buffer = new std::vector<char> (size * sizeof(InputSchema));
+            auto ptr = (InputSchema *) buffer->data();
+            for (unsigned long idx = 0; idx < size; idx++) {
+                ptr[idx].st = idx * period;
+                ptr[idx].dur = period;
+                ptr[idx].payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
+            }
+            InputBuffers.push_back(buffer);
         }
     }
 
@@ -61,7 +65,7 @@ class Benchmark
         auto start_time = std::chrono::high_resolution_clock::now();
 
         for (int64_t i = 0; i < runs; i++) {
-            application->processData(*InputBuffer);
+            application->processData(*(InputBuffers[runs % 10000]));
         }
 
         // Signal that no more tasks will be enqueued

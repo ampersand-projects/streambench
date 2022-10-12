@@ -27,10 +27,11 @@ struct alignas(16) AggregateOutputSchema {
 
 struct alignas(16) YahooOutputSchema {
     long timestamp;
+    long campaign_id;
     int count;
 
     void print_data() {
-        std::cout << "[" << timestamp << "]: " << count << std::endl;
+        std::cout << "[" << timestamp << "]: " << campaign_id << " " << count << std::endl;
     }
 };
 
