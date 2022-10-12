@@ -98,6 +98,7 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBRARY_PATH
 ENV PATH=/usr/lib/ccache:$PATH
 
 RUN cd && \
+    apt upgrade -y && \
     apt install -y \
     git  \
     gcc  \
@@ -137,6 +138,7 @@ RUN cd && \
     make install
 
 RUN cd && \
+    apt upgrade -y && \
     apt install -y \
     autoconf  \
     automake  \
