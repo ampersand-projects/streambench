@@ -39,6 +39,7 @@ public:
     records_per_interval(rpi)
   	{
 		int num_nodes = numa_num_configured_nodes();
+		cout << "Number of NUMA nodes: " << num_nodes << endl;
 
 		buffer_size_records = records_total;
 		xzl_assert(buffer_size_records > 0);
