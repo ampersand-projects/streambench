@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Microsoft.StreamProcessing;
 
 namespace bench
@@ -8,18 +10,25 @@ namespace bench
     class Program
     {
         static double RunTest<TPayload, TResult>(Func<IStreamable<Empty, TPayload>> data,
-            Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform)
+            Func<IStreamable<Empty, TPayload>, IStreamable<Empty, TResult>> transform, int threads = 1)
         {
-            var stream = data();
+            var streams = new List<IStreamable<Empty, TPayload>>();
+            for (int i = 0; i < threads; i++)
+            {
+                streams.Add(data());
+            }
 
             var sw = new Stopwatch();
             sw.Start();
-            var s_obs = transform(stream);
-
-            s_obs
-                .ToStreamEventObservable()
-                .Wait();
+            Parallel.For(0, threads, i =>
+            {
+                var s_obs = transform(streams[i]);
+                s_obs
+                    .ToStreamEventObservable()
+                    .Wait();
+            });
             sw.Stop();
+
             return sw.Elapsed.TotalSeconds;
         }
         
@@ -46,15 +55,9 @@ namespace bench
         {
             string testcase = (args.Length > 0) ? args[0] : "normalize";
             long size = (args.Length > 1) ? long.Parse(args[1]) : 100000000;
+            int threads = (args.Length > 2) ? int.Parse(args[2]) : 1;
             long period = 1;
             double time = 0;
-
-            Func<IStreamable<Empty, float>> data = () =>
-            {
-                return new SynDataObs(period, size)
-                    .ToStreamable()
-                    .Cache();
-            };
 
             Func<IStreamable<Empty, float>> DataFn(long p, long s)
             {
@@ -128,13 +131,15 @@ namespace bench
                 case "normalize":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .Normalize(10000)
+                            .Normalize(10000),
+                        threads
                     );
                     break;
                 case "fillmean":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .FillMean(10000, period)
+                            .FillMean(10000, period),
+                        threads
                     );
                     break;
                 case "resample":
@@ -148,37 +153,43 @@ namespace bench
                     };
                     time = RunTest(sig4, stream =>
                         stream
-                            .Resample(iperiod, operiod)
+                            .Resample(iperiod, operiod),
+                        threads
                     );
                     break;
                 case "algotrading":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .AlgoTrading(50, 20, period)
+                            .AlgoTrading(50, 20, period),
+                        threads
                     );    
                     break;
                 case "largeqty":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .LargeQty(10, period)
+                            .LargeQty(10, period),
+                        threads
                     );    
                     break;
                 case "rsi":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .RSI(14, period)
+                            .RSI(14, period),
+                        threads
                     );       
                     break;
                 case "pantom":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .PanTom(period)
+                            .PanTom(period),
+                        threads
                     );
                     break;
                 case "kurtosis":
                     time = RunTest(DataFn(period, size), stream =>
                         stream
-                            .Kurtosis(100)
+                            .Kurtosis(100),
+                        threads
                     );
                     break;
                 case "taxi":
@@ -204,7 +215,8 @@ namespace bench
                 case "yahoo":
                     time = RunTest(YahooDataFn(period, size), stream =>
                         stream
-                            .Yahoo(10, 1)
+                            .Yahoo(10, 1),
+                        threads
                     );
                     break;
                 default:
