@@ -1,5 +1,10 @@
 FROM ubuntu:16.04
 
+ARG ROOTDIR=/root/streambox_bench
+
+ADD ./. $ROOTDIR
+WORKDIR $ROOTDIR
+
 RUN apt-get update && \
     apt-get install -y \
     g++ \
@@ -26,26 +31,22 @@ RUN apt-get update && \
     vim \
     less
 
-COPY . /home
-
-RUN cd /home/streambox/folly && \
+RUN cd ${ROOTDIR}/streambox/folly && \
     mkdir _build && \
     cd _build && \
     cmake .. && \
     make -j$(nproc) && \
     make install
 
-RUN cd /home/streambox/re2 && \
+RUN cd ${ROOTDIR}/streambox/re2 && \
     mkdir _build && \
     cd _build && \
     cmake -DCMAKE_CXX_FLAGS="-std=c++11" .. && \
     make -j$(nproc) && \
     make install
 
-RUN cd /home && \
-    mkdir build && \
-    cd build && \
-    cmake \
+WORKDIR ${ROOTDIR}/build
+RUN cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_FLAGS="-std=c++14" \
         -G "CodeBlocks - Unix Makefiles" \
