@@ -39,6 +39,7 @@ int main(int argc, char** argv)
 
     string testcase = (argc > 1) ? argv[1] : "select";
     int64_t size = (argc > 2) ? atoi(argv[2]) : 100000000;
+    int threads = (argc > 3) ? atoi(argv[3]) : 1;
     int64_t period = 1;
 
     double time = 0;
@@ -62,28 +63,28 @@ int main(int argc, char** argv)
         OuterJoinBench bench(period, period, size);
         time = bench.run();
     } else if (testcase == "normalize") {
-        NormBench bench(period, 10000, size);
+        ParallelNormBench bench(threads, period, 10000, size);
         time = bench.run();
     } else if (testcase == "fillmean") {
-        ImputeBench bench(period, 10000, size);
+        ParallelImputeBench bench(threads, period, 10000, size);
         time = bench.run();
     } else if (testcase == "resample") {
-        ResampleBench bench(4, 5, 1000, size);
+        ParallelResampleBench bench(threads, 4, 5, 1000, size);
         time = bench.run();
     } else if (testcase == "algotrading") {
-        MOCABench bench(period, 20, 50, 100, size);
+        ParallelMOCABench bench(threads, period, 20, 50, 100, size);
         time = bench.run();
     } else if (testcase == "rsi") {
-        RSIBench bench(period, 14, 100, size);
+        ParallelRSIBench bench(threads, period, 14, 100, size);
         time = bench.run();
     } else if (testcase == "largeqty") {
-        LargeQtyBench bench(period, 10, 100, size);
+        ParallelLargeQtyBench bench(threads, period, 10, 100, size);
         time = bench.run();
     } else if (testcase == "pantom") {
-        PeakBench bench(period, 30, 100, size);
+        ParallelPeakBench bench(threads, period, 30, 100, size);
         time = bench.run();
     } else if (testcase == "kurtosis") {
-        KurtBench bench(period, 100, size);
+        ParallelKurtBench bench(threads, period, 100, size);
         time = bench.run();
     } else if (testcase == "eg1") {
         Eg1Bench bench(period, size, 10, 20, size);

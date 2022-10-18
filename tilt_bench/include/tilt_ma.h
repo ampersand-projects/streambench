@@ -156,4 +156,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelMOCABench : public ParallelBenchmark {
+public:
+    ParallelMOCABench(int threads, int64_t period, int64_t w_short, int64_t w_long, int64_t scale, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new MOCABench(period, w_short, w_long, scale, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_MA_H_

@@ -214,4 +214,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelLargeQtyBench : public ParallelBenchmark {
+public:
+    ParallelLargeQtyBench(int threads, int64_t period, int64_t window, int64_t scale, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new LargeQtyBench(period, window, scale, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_QTY_H_

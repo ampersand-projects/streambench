@@ -168,4 +168,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelRSIBench : public ParallelBenchmark {
+public:
+    ParallelRSIBench(int threads, int64_t period, int64_t window, int64_t scale, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new RSIBench(period, window, scale, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_RSI_H_

@@ -262,4 +262,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelPeakBench : public ParallelBenchmark {
+public:
+    ParallelPeakBench(int threads, int64_t period, int64_t window, int64_t scale, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new PeakBench(period, window, scale, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_PEAK_H_

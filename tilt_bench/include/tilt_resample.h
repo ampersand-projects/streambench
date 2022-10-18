@@ -129,4 +129,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelResampleBench : public ParallelBenchmark {
+public:
+    ParallelResampleBench(int threads, dur_t iperiod, int64_t operiod, int64_t scale, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new ResampleBench(iperiod, operiod, scale, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_RESAMPLE_H_

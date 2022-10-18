@@ -4,6 +4,7 @@
 #include <memory>
 #include <cstdlib>
 #include <chrono>
+#include <thread>
 
 #include "tilt/codegen/loopgen.h"
 #include "tilt/codegen/llvmgen.h"
@@ -49,7 +50,7 @@ public:
     virtual void init() = 0;
     virtual void release() = 0;
 
-    int64_t run()
+    intptr_t compile()
     {
         auto query_op = query();
         auto query_op_sym = _sym("query", query_op);
@@ -61,6 +62,13 @@ public:
         auto llmod = LLVMGen::Build(loop, llctx);
         jit->AddModule(move(llmod));
         auto addr = jit->Lookup(loop->get_name());
+
+        return addr;
+    }
+
+    int64_t run()
+    {
+        auto addr = compile();
 
         init();
 
@@ -90,9 +98,41 @@ public:
         delete [] reg->data;
     }
 
-protected:
     virtual Op query() = 0;
     virtual void execute(intptr_t) = 0;
+};
+
+class ParallelBenchmark {
+public:
+    int64_t run()
+    {
+        auto addr = benchs[0]->compile();
+
+        for (int i = 0; i < benchs.size(); i++) {
+            benchs[i]->init();
+        }
+
+        vector<thread> splits;
+        auto start_time = high_resolution_clock::now();
+        for (int i = 0; i < benchs.size(); i++) {
+            auto bench = benchs[i];
+            splits.push_back(thread([bench, addr]() {
+                bench->execute(addr);
+            }));
+        }
+        for (int i = 0; i < benchs.size(); i++) {
+            splits[i].join();
+        }
+        auto end_time = high_resolution_clock::now();
+
+        for (int i = 0; i < benchs.size(); i++) {
+            benchs[i]->release();
+        }
+
+        return duration_cast<microseconds>(end_time - start_time).count();
+    }
+
+    vector<Benchmark*> benchs;
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_BENCH_H_

@@ -94,4 +94,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelImputeBench : public ParallelBenchmark {
+public:
+    ParallelImputeBench(int threads, dur_t period, int64_t window, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new ImputeBench(period, window, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_IMPUTE_H_

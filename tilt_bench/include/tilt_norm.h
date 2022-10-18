@@ -97,4 +97,14 @@ private:
     region_t out_reg;
 };
 
+class ParallelNormBench : public ParallelBenchmark {
+public:
+    ParallelNormBench(int threads, dur_t period, int64_t window, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new NormBench(period, window, size));
+        }
+    }
+};
+
 #endif  // TILT_BENCH_INCLUDE_TILT_NORM_H_
