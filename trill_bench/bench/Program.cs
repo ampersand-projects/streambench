@@ -215,7 +215,7 @@ namespace bench
                 case "yahoo":
                     time = RunTest(YahooDataFn(period, size), stream =>
                         stream
-                            .Yahoo(10, 1),
+                            .Yahoo(100, 1),
                         threads
                     );
                     break;
@@ -223,7 +223,7 @@ namespace bench
                     Console.Error.WriteLine("Unknown benchmark combination {0}", testcase);
                     return;
             }
-            Console.WriteLine("Benchmark: {0}, Time: {1:.###} sec", testcase, time);
+            Console.WriteLine("Throughput(M/s), {0}, {1}, {2:.###}", testcase, threads, (size * threads) / (time * 1000000));
         }
     }
 }

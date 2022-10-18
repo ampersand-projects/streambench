@@ -80,7 +80,7 @@ int main(int argc, const char *argv[])
     throw std::runtime_error("Invalid testcase");
   }
 
-  std::cout << "Time: " << std::fixed << std::setprecision(3) << (double) time/1000000 << " seconds" << std::endl;
+  std::cout << "Throughput(M/s), " << testcase << ", " << parallelism << ", " << std::fixed << std::setprecision(3) << (double) (parallelism * bufferSize) / time << std::endl;
 
   return 0;
 }

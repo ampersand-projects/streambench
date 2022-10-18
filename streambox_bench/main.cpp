@@ -59,8 +59,7 @@ int main(int argc, char *argv[])
     }
 
     cout << fixed;
-    cout << "Testcase: " << testcase <<", Size: " << records_total << ", Time: "
-        << setprecision(3) << time / 1000000 << " seconds" << endl;
+    cout << "Throughput(M/s), " << testcase <<", " << num_cores << ", " << setprecision(3) << records_total / time << endl;
 
     return 0;
 }

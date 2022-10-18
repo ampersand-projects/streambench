@@ -115,8 +115,7 @@ int main(int argc, char** argv)
         throw runtime_error("Invalid testcase");
     }
 
-    cout << "Testcase: " << testcase <<", Size: " << size
-        << ", Time: " << setprecision(3) << time / 1000000 << endl;
+    cout << "Throughput(M/s), " << testcase << ", " << threads << ", " << setprecision(3) << (size * threads) / time << endl;
 
     return 0;
 }
