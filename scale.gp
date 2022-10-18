@@ -1,6 +1,6 @@
 set grid
 set term pdf font 'Verdana,18'
-ofile = "ysb_tp.pdf"
+ofile = "ysb.pdf"
 set key top outside horizontal
 set output ofile
 set datafile separator ","

@@ -10,6 +10,7 @@ function run_streambox {
 }
 
 # YSB benchmark
+echo "Running YSB on StreamBox ..."
 run_streambox yahoo 1 320000000 | tee -a $TMPFILE
 run_streambox yahoo 2 160000000 | tee -a $TMPFILE
 run_streambox yahoo 4 80000000 | tee -a $TMPFILE

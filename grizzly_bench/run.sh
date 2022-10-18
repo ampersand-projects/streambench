@@ -10,6 +10,7 @@ function run_grizzly {
 }
 
 # YSB benchmark
+echo "Running YSB on Grizzly ..."
 run_grizzly yahoo 20000000 1  | tee -a $TMPFILE
 run_grizzly yahoo 20000000 2  | tee -a $TMPFILE
 run_grizzly yahoo 20000000 4  | tee -a $TMPFILE

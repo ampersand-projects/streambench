@@ -11,3 +11,7 @@ run streambox_bench
 run grizzly_bench
 run lightsaber2_bench
 run tilt_bench
+
+# Plot
+gnuplot scale.gp
+gnuplot e2e.gp
