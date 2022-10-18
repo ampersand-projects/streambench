@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 function setup {
     pushd $1
     ./setup.sh
