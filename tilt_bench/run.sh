@@ -5,11 +5,15 @@ STUB="Throughput(M/s)"
 TMPFILE=$(mktemp /tmp/tilt_yahoo.XXXXXX)
 OUTFILE=tilt_yahoo.csv
 
+function run_tilt {
+	docker run --rm -it  tilt_image ./main $1 $2 $3 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
+}
+
 # YSB benchmark
-docker run --rm -it  tilt_image ./main yahoo 320000000 1 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
-docker run --rm -it  tilt_image ./main yahoo 160000000 2 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
-docker run --rm -it  tilt_image ./main yahoo 80000000 4 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
-docker run --rm -it  tilt_image ./main yahoo 40000000 8 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
-docker run --rm -it  tilt_image ./main yahoo 20000000 16 | grep $STUB | awk -F, '{ print $3 "," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_tilt yahoo 320000000 1 | tee -a $TMPFILE
+run_tilt yahoo 160000000 2 | tee -a $TMPFILE
+run_tilt yahoo 80000000 4  | tee -a $TMPFILE
+run_tilt yahoo 40000000 8  | tee -a $TMPFILE
+run_tilt yahoo 20000000 16 | tee -a $TMPFILE
 
 cp $TMPFILE $OUTFILE
