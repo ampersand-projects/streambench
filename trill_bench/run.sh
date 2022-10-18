@@ -25,14 +25,16 @@ cp $TMPFILE $OUTFILE
 TMPFILE=$(mktemp /tmp/trill_real.XXXXXX)
 OUTFILE=trill_real.csv
 
+THREADS=8
+
 echo "Running real-world benchmark on Trill"
-run_trill normalize 10000000 8   | awk -F, '{ print "Normalize," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill fillmean 10000000 8    | awk -F, '{ print "Impute," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill resample 10000000 8    | awk -F, '{ print "Resample," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill algotrading 10000000 8 | awk -F, '{ print "Trading," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill rsi 10000000 8         | awk -F, '{ print "RSI," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill pantom 10000000 8      | awk -F, '{ print "PanTom," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill kurtosis 10000000 8    | awk -F, '{ print "Vibration," $4}' | tr -d ' ' | tee -a $TMPFILE
-run_trill largeqty 10000000 8    | awk -F, '{ print "FraudDet," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill normalize 10000000 $THREADS   | awk -F, '{ print "Normalize," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill fillmean 10000000 $THREADS    | awk -F, '{ print "Impute," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill resample 10000000 $THREADS    | awk -F, '{ print "Resample," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill algotrading 10000000 $THREADS | awk -F, '{ print "Trading," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill rsi 10000000 $THREADS         | awk -F, '{ print "RSI," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill pantom 10000000 $THREADS      | awk -F, '{ print "PanTom," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill kurtosis 10000000 $THREADS    | awk -F, '{ print "Vibration," $4}' | tr -d ' ' | tee -a $TMPFILE
+run_trill largeqty 10000000 $THREADS    | awk -F, '{ print "FraudDet," $4}' | tr -d ' ' | tee -a $TMPFILE
 
 cp $TMPFILE $OUTFILE
