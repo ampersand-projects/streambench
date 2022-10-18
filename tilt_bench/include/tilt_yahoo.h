@@ -31,7 +31,7 @@ Op _Yahoo(_sym in, int64_t w)
 
 class YahooBench : public Benchmark {
 public:
-    YahooBench(dur_t period, int64_t size, int64_t w) :
+    YahooBench(dur_t period, int64_t w, int64_t size) :
         period(period), size(size), w(w)
     {}
 
@@ -70,6 +70,16 @@ private:
     int64_t size;
     dur_t period;
     int64_t w;
+};
+
+class ParallelYahooBench : public ParallelBenchmark {
+public:
+    ParallelYahooBench(int threads, dur_t period, int64_t w, int64_t size)
+    {
+        for (int i = 0; i < threads; i++) {
+            benchs.push_back(new YahooBench(period, w, size));
+        }
+    }
 };
 
 #endif  // TILT_BENCH_INCLUDE_TILT_AGGREGATE_H_

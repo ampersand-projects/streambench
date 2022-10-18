@@ -109,7 +109,7 @@ int main(int argc, char** argv)
         Eg7Bench bench(period, size, 10, 20, size);
         time = bench.run();
     } else if (testcase == "yahoo") {
-        YahooBench bench(period, size, 10 * period);
+        ParallelYahooBench bench(threads, period, 100 * period, size);
         time = bench.run();
     } else {
         throw runtime_error("Invalid testcase");
