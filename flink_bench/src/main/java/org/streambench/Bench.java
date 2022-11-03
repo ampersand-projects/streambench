@@ -4,6 +4,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.streambench.Transform.AlgoTradeResult;
+import org.streambench.Transform.YahooInteraction;
 import org.streambench.Utility.SumAggregation;
 import org.streambench.Utility.ConstKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -44,6 +45,23 @@ public class Bench {
         WatermarkStrategy<Data> wmStrategy = WatermarkStrategy.<Data>forMonotonousTimestamps()
                 .withTimestampAssigner((event, timestamp) -> event.start_time);
         DataStream<Data> with_timestamp = stream.assignTimestampsAndWatermarks(wmStrategy);
+        return with_timestamp;
+    }
+
+    public static DataStream<YahooInteraction> yahooGen(long size, long period, StreamExecutionEnvironment env) {
+        ArrayList<YahooInteraction> source = new ArrayList<YahooInteraction>();
+        Random rand = new Random();
+        for (int i = 0; i < size; i++) {
+            long userID = rand.nextInt(4) + 1;
+            long campaignID = rand.nextInt(4) + 1;
+            long event_type = rand.nextInt(4) + 1;
+            YahooInteraction payload = new YahooInteraction(i * period, (i + 1) * period, userID, campaignID, event_type);
+            source.add(payload);
+        }
+        DataStream<YahooInteraction> stream = env.fromCollection(source);
+        WatermarkStrategy<YahooInteraction> wmStrategy = WatermarkStrategy.<YahooInteraction>forMonotonousTimestamps()
+                .withTimestampAssigner((event, timestamp) -> event.start_time);
+        DataStream<YahooInteraction> with_timestamp = stream.assignTimestampsAndWatermarks(wmStrategy);
         return with_timestamp;
     }
 
@@ -103,6 +121,12 @@ public class Bench {
             case "normalize":
                 long win_size = 10000;
                 DataStream<Data> result = Transform.Normalization(stream1, win_size);
+                break;
+            case "yahoo":
+                win_size = 10;
+                long event_type = 1;
+                DataStream<YahooInteraction> yahoo_source = yahooGen(size, period, env);
+                DataStream<Data> yahooResult = Transform.Yahoo(yahoo_source, win_size, event_type, period);
                 break;
             default:
                 System.out.println("Unknown benchmark type");
