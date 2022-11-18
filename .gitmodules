@@ -20,4 +20,4 @@
 	url = https://github.com/wzhao18/streambox.git
 [submodule "lightsaber2_bench/LightSaber"]
 	path = lightsaber2_bench/LightSaber
-	url = git@github.com:ampersand-projects/LightSaber.git
+	url = https://github.com/ampersand-projects/LightSaber.git
