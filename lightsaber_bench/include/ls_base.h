@@ -24,7 +24,7 @@ class Benchmark
     };
     int m_sock = 0;
     int m_server_fd;
-    std::vector<char> *InputBuffer = nullptr;
+    std::vector<std::vector<char>*> InputBuffers;
     QueryApplication *application = nullptr;
     virtual void createApplication() = 0;
 
@@ -45,27 +45,39 @@ class Benchmark
     {
         double range = 100;
 
-        InputBuffer = new std::vector<char> (size * sizeof(InputSchema));
-        auto ptr = (InputSchema *) InputBuffer->data();
-        for (unsigned long idx = 0; idx < size; idx++) {
-            ptr[idx].st = idx * period;
-            ptr[idx].dur = period;
-            ptr[idx].payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
+        // Make 1000 copies of buffer. Each run will use a different one.
+        for (size_t i = 0; i < 1000; i++) {
+            auto buffer = new std::vector<char> (size * sizeof(InputSchema));
+            auto ptr = (InputSchema *) buffer->data();
+            for (unsigned long idx = 0; idx < size; idx++) {
+                ptr[idx].st = idx * period;
+                ptr[idx].dur = period;
+                ptr[idx].payload = static_cast<float>(rand() / static_cast<double>(RAND_MAX / range)) - (range / 2);
+            }
+            InputBuffers.push_back(buffer);
         }
     }
 
-    int64_t runBenchmark(int64_t size, int64_t period)
+    int64_t runBenchmark(int64_t size, int64_t period, int64_t runs)
     {
         PopulateBufferWithData(size, period);
 
         auto start_time = std::chrono::high_resolution_clock::now();
-        application->processData(*InputBuffer, -1);
+
+        for (size_t i = 0; i < runs; i++) {
+            application->processData(*(InputBuffers[i % 1000]));
+        }
+
+        // Signal that no more tasks will be enqueued
+        application->closeTaskQueue();
+        // Wait for worker threads to finish executions
+        application->waitForCompletion();
+
         auto end_time = std::chrono::high_resolution_clock::now();
-        
         int64_t time = duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        
         return time;
     }
-
 };
 
 #endif // LIGHTSABER_BENCH_INCLUDE_BENCHMARK_H_

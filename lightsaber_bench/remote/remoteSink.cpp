@@ -27,52 +27,39 @@ struct alignas(16) AggregateOutputSchema {
 
 struct alignas(16) YahooOutputSchema {
     long timestamp;
+    long campaign_id;
     int count;
 
     void print_data() {
-        std::cout << "[" << timestamp << "]: " << count << std::endl;
+        std::cout << "[" << timestamp << "]: " << campaign_id << " " << count << std::endl;
     }
 };
 
 template<typename T>
 class RemoteSink {
-    protected:
+private:
+    int64_t batch_size;
+    int64_t buffer_size;
     int m_sock = 0;
     int m_server_fd = 0;
-    std::vector<char> *buffer = nullptr;
+    std::vector<char> buffer;
 
-    public:
-    int run(int64_t output_size) {
-        InitializeBuffer(output_size * sizeof(T));
-
-        setupSocket();
-        readBytes(m_sock, output_size * sizeof(T), (void *)buffer->data());
-
-        print_buffer(buffer, output_size);
-        return 0;
-    }
-
-    private:
-    void InitializeBuffer(int64_t size) {
-        buffer = new std::vector<char>(size);
-    }
-
-    static void readBytes(int socket, unsigned int length, void *buffer) {
-        size_t bytesRead = 0;
-        while (bytesRead < length) {
-            auto valread = read(socket, (char *)buffer + bytesRead, length - bytesRead);
-            bytesRead += valread;
+    void read_one_batch() {
+        int64_t bytes_read = 0;
+        while (bytes_read < buffer_size) {
+            auto valread = read(m_sock, (char *)(buffer.data()) + bytes_read, buffer_size - bytes_read);
+            bytes_read += valread;
         }
     }
 
-    void print_buffer(std::vector<char> *buf, int64_t len) {
-        auto arr = (T *) buf->data();
-        for (unsigned long idx = 0; idx < len; idx++) {
+    void print_buffer() {
+        auto arr = (T *) buffer.data();
+        for (unsigned long idx = 0; idx < batch_size; idx++) {
             arr[idx].print_data();
         }
     }
 
-    void setupSocket() {
+    void setup_socket() {
         struct sockaddr_in address {};
         int opt = 1;
         int addrlen = sizeof(address);
@@ -99,20 +86,40 @@ class RemoteSink {
             throw std::runtime_error("error: accept");
         }
     }
+
+public:
+    RemoteSink(int64_t batch_size) :
+        batch_size(batch_size),
+        buffer_size(batch_size * sizeof(T)),
+        buffer(buffer_size)
+    {}
+
+    void run()
+    {
+        setup_socket();
+
+        while (true) {
+            read_one_batch();
+            std::cout << "Successfully read " << batch_size << " tuples." << std::endl;
+            // print_buffer();
+        }
+    }
 };
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t output_size = (argc > 2) ? atoi(argv[2]) : 10000000;
+    int64_t batch_size = (argc > 2) ? atoi(argv[2]) : 10000000;
+
     if (testcase == "aggregate") {
-        auto remoteSink = std::make_unique<RemoteSink<AggregateOutputSchema>>();
-        remoteSink->run(output_size);
+        auto remoteSink = std::make_unique<RemoteSink<AggregateOutputSchema>>(batch_size);
+        remoteSink->run();
     } else if (testcase == "yahoo") {
-        auto remoteSink = std::make_unique<RemoteSink<YahooOutputSchema>>();
-        remoteSink->run(output_size);
+        auto remoteSink = std::make_unique<RemoteSink<YahooOutputSchema>>(batch_size);
+        remoteSink->run();
     } else {
-        auto remoteSink = std::make_unique<RemoteSink<OutputSchema>>();
-        remoteSink->run(output_size);
+        auto remoteSink = std::make_unique<RemoteSink<OutputSchema>>(batch_size);
+        remoteSink->run();
     }
+
     return 0;
 }

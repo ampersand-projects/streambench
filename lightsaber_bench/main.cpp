@@ -6,34 +6,42 @@
 
 int main(int argc, const char **argv) {
     std::string testcase = (argc > 1) ? argv[1] : "select";
-    int64_t size = (argc > 2) ? atoi(argv[2]) : 10000000;
-    int64_t runs = (argc > 3) ? atoi(argv[3]) : 1;
+    // In # of events. This will multiply by 1000. So don't set it too much or memory will exhaust.
+    int64_t size = (argc > 2) ? atoi(argv[2]) : 100000;
+    int64_t runs = (argc > 3) ? atoi(argv[3]) : 10000;
+    int64_t cores = (argc > 4) ? atoi(argv[4]) : 1;
     int64_t period = 1;
-    SystemConf::getInstance().BATCH_SIZE = 200000; // This means the input_size (size * sizeof(InputSchema)) must be multiple of 200,000
-    SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(Benchmark::InputSchema);
+    
+    SystemConf::getInstance().BATCH_SIZE = 131072; // In Bytes
+    SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 8 * size * sizeof(Benchmark::InputSchema); // In Bytes, the coefficient is worth tuning
+    SystemConf::getInstance().WORKER_THREADS = cores;
 
-    double time = 0;
     std::unique_ptr<Benchmark> benchmarkQuery {};
     if (testcase == "select") {
         benchmarkQuery = std::make_unique<SelectBench>(60);
     } else if (testcase == "where") {
         benchmarkQuery = std::make_unique<WhereBench>(60);
     } else if (testcase == "aggregate") {
+        SystemConf::getInstance().SLOTS = 256;
+        SystemConf::getInstance().PARTIAL_WINDOWS = 64;
         benchmarkQuery = std::make_unique<AggregateBench>(1000);
     } else if (testcase == "alterdur") {
         benchmarkQuery = std::make_unique<AlterDurBench>(1, 60);
     } else if (testcase == "yahoo") {
-        SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = size * sizeof(YahooBench::YahooSchema);
+        SystemConf::getInstance().BATCH_SIZE = 1048576;
+        SystemConf::getInstance().SLOTS = 512;
+        SystemConf::getInstance().PARTIAL_WINDOWS = 512;
+        SystemConf::getInstance().HASH_TABLE_SIZE = 1024;    
+        SystemConf::getInstance().BUNDLE_SIZE = size * sizeof(YahooBench::YahooSchema); // not used, simply to bypass assertions.
+        SystemConf::getInstance().CIRCULAR_BUFFER_SIZE = 8 * size * sizeof(YahooBench::YahooSchema);
         benchmarkQuery = std::make_unique<YahooBench>(1000);
     } else {
         throw std::runtime_error("Invalid testcase");
     }
 
-    for (int64_t i = 0; i < runs; i++) {
-        time += benchmarkQuery->runBenchmark(size, period);
-    }
+    double time = benchmarkQuery->runBenchmark(size, period, runs);
 
-    std::cout << "Testcase: " << testcase <<", Size: " << size * runs
+    std::cout << "Testcase: " << testcase << ", Size: " << size * runs
         << ", Time: " << std::setprecision(3) << time / 1000000 << std::endl;
 
     return 0;

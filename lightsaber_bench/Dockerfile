@@ -46,7 +46,7 @@ RUN apt update && \
 
 RUN cd && \
     apt remove --purge --auto-remove cmake && \
-    version=3.16 && \
+    version=3.17 && \
     build=2 && \
     mkdir ~/temp && \
     cd ~/temp && \
@@ -66,7 +66,7 @@ RUN cd /usr/src/gtest && \
 		ln -s /usr/lib/libgtest_main.a /usr/local/lib/gtest/libgtest_main.a
 
 RUN cd && \
-    git clone --depth 1 https://github.com/wzhao18/benchmark.git && \
+    git clone --depth 1 https://github.com/google/benchmark.git && \
 		cd benchmark && \
 		mkdir build && \
 		cd build && \
@@ -98,6 +98,8 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBRARY_PATH
 ENV PATH=/usr/lib/ccache:$PATH
 
 RUN cd && \
+    apt update && \
+    apt upgrade -y && \
     apt install -y \
     git  \
     gcc  \
@@ -137,6 +139,8 @@ RUN cd && \
     make install
 
 RUN cd && \
+    apt update && \
+    apt upgrade -y && \
     apt install -y \
     autoconf  \
     automake  \
