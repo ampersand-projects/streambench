@@ -6,9 +6,9 @@
 #include <chrono>
 #include <thread>
 
-#include "tilt/codegen/loopgen.h"
-#include "tilt/codegen/llvmgen.h"
-#include "tilt/codegen/vinstr.h"
+#include "tilt/pass/codegen/loopgen.h"
+#include "tilt/pass/codegen/llvmgen.h"
+#include "tilt/pass/codegen/vinstr.h"
 #include "tilt/engine/engine.h"
 
 using namespace std;
